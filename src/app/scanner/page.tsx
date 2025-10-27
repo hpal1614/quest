@@ -1,4 +1,4 @@
-// Scanner Page - AR SCANNER WITH REAL CAMERA
+// Scanner Page - AR CARD RECOGNITION
 
 'use client';
 
@@ -9,6 +9,7 @@ import { useQuestStore } from '@/store/questStore';
 import { getQuestById } from '@/data/quests';
 import { validateQRCode } from '@/lib/scanner/validator';
 import { calculateDistance } from '@/lib/gps/distance';
+import { ARCardScanner } from '@/components/scanner/ARCardScanner';
 import { RealQRScanner } from '@/components/scanner/RealQRScanner';
 import { MockScanner } from '@/components/scanner/MockScanner';
 import { ARMascotView } from '@/components/ar/ARMascotView';
@@ -19,7 +20,8 @@ export default function ScannerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const questId = searchParams?.get('questId');
-  const useMock = searchParams?.get('mock') === 'true'; // Support mock mode for testing
+  const useMock = searchParams?.get('mock') === 'true'; // Mock mode for testing
+  const useQR = searchParams?.get('qr') === 'true'; // QR mode (fallback)
   const quest = questId ? getQuestById(questId) : null;
 
   const { location } = useGeolocation();
@@ -124,17 +126,25 @@ export default function ScannerPage() {
     );
   }
 
-  // Show scanner (real or mock)
+  // Show scanner (card recognition, QR, or mock)
   return (
     <>
       {useMock ? (
+        // Mock mode - button-based testing
         <MockScanner
           onScan={handleScanSuccess}
           onClose={handleClose}
         />
-      ) : (
+      ) : useQR ? (
+        // QR mode - fallback for QR codes
         <RealQRScanner
           onScan={handleScanSuccess}
+          onClose={handleClose}
+        />
+      ) : (
+        // Default: AR Card Recognition
+        <ARCardScanner
+          onCardDetected={handleScanSuccess}
           onClose={handleClose}
         />
       )}
@@ -144,6 +154,22 @@ export default function ScannerPage() {
         <div className="fixed bottom-20 left-0 right-0 z-[60] px-4">
           <div className="max-w-md mx-auto bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg">
             <p className="text-sm font-medium">{validationError}</p>
+
+            {/* Mode switcher */}
+            <div className="mt-3 flex gap-2 text-xs">
+              <button
+                onClick={() => router.push(`/scanner?questId=${questId}&qr=true`)}
+                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
+              >
+                Try QR Mode
+              </button>
+              <button
+                onClick={() => router.push(`/scanner?questId=${questId}&mock=true`)}
+                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
+              >
+                Try Mock Mode
+              </button>
+            </div>
           </div>
         </div>
       )}
