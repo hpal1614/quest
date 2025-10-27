@@ -118,6 +118,65 @@ export const QUESTS: Quest[] = [
       expirationDate: '2025-12-31'
     }
   },
+  // TEST QUEST - Newtown Face Cards
+  {
+    id: 'quest_test_newtown',
+    title: 'Test Quest - Newtown Face Cards',
+    description: 'Test quest in Newtown with Face Cards theme. Two locations for coffee testing!',
+    weekNumber: 0,
+    startDate: '2024-01-01T00:00:00+11:00',
+    endDate: '2025-12-31T23:59:59+11:00',
+    status: 'active',
+    theme: {
+      color: '#10B981',
+      mascot: 'test_mascot',
+      icon: '🃏',
+      gradient: 'from-green-500 to-emerald-500'
+    },
+    estimatedDuration: 20,
+    locations: [
+      {
+        id: 'start',
+        name: 'Newtown Start Location',
+        type: 'start',
+        coordinates: { lat: -33.8969435540387, lng: 151.18394211069494 },
+        radius: 100,
+        clue: 'Scan the ACE OF HEARTS card to begin your Newtown quest!',
+        qrCode: 'ACE-HEARTS-NEWTOWN',
+        question: null
+      },
+      {
+        id: 'finish',
+        name: 'Coffee Shop - King of Spades',
+        type: 'finish',
+        coordinates: { lat: -33.894459291888374, lng: 151.18273364433617 },
+        radius: 100,
+        clue: 'Get your coffee and scan the KING OF SPADES card to complete the quest!',
+        qrCode: 'KING-SPADES-NEWTOWN',
+        question: {
+          text: 'What suit is the King card?',
+          answer: 'Spades',
+          alternativeAnswers: ['spade', 'spades'],
+          hints: [
+            'It\'s a black suit',
+            'It looks like an upside down heart',
+            'The answer is Spades'
+          ]
+        }
+      }
+    ],
+    rewards: {
+      vouchers: [
+        {
+          id: 'v_newtown_test',
+          business: 'Newtown Test Cafe',
+          offer: 'Free Test Coffee',
+          code: 'NEWTOWN-TEST-{UNIQUE_ID}'
+        }
+      ],
+      expirationDate: '2025-12-31'
+    }
+  },
   // Week 1: Urban Adventure
   {
     id: 'quest_w1_urban',
