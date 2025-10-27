@@ -170,3 +170,4 @@ export function QuestCard({ quest, distance, userLocation }: QuestCardProps) {
   );
 }
 
+

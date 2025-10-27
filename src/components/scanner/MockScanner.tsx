@@ -111,3 +111,4 @@ export function MockScanner({ onScan, onClose }: MockScannerProps) {
   );
 }
 
+

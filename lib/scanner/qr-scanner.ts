@@ -74,3 +74,4 @@ export class QRScannerService {
 
 export const qrScannerService = new QRScannerService();
 
+

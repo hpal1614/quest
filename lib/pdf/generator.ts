@@ -103,3 +103,4 @@ export function generateDeviceFingerprint(): string {
   return Math.abs(hash).toString(36);
 }
 
+

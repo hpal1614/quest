@@ -45,3 +45,4 @@ export function getSimilarityScore(userAnswer: string, correctAnswer: string): n
   return results.length > 0 && results[0].score !== undefined ? results[0].score : 1;
 }
 
+

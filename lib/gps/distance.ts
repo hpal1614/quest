@@ -55,3 +55,4 @@ export function getDistanceCategory(distance: number): 'available' | 'nearby' | 
   return 'far';
 }
 
+
