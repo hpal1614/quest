@@ -19,6 +19,23 @@ export function WorkingARScanner({ onScan, onClose, markerCode = 'MARKER-FOUND',
   const [isStarting, setIsStarting] = useState(true);
   const [isARActive, setIsARActive] = useState(false);
 
+  // Helper function to load scripts dynamically
+  const loadScript = (src: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // Check if script already exists
+      if (document.querySelector(`script[src="${src}"]`)) {
+        resolve();
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+      document.head.appendChild(script);
+    });
+  };
+
   useEffect(() => {
     let isCancelled = false;
     let mindarThree: any = null;
@@ -34,30 +51,21 @@ export function WorkingARScanner({ onScan, onClose, markerCode = 'MARKER-FOUND',
       try {
         if (!containerRef.current) return;
 
-        // Create import map for ES modules
-        const importMap = document.createElement('script');
-        importMap.type = 'importmap';
-        importMap.textContent = JSON.stringify({
-          imports: {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
-            "mindar": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/"
-          }
-        });
-        document.head.appendChild(importMap);
+        // Load libraries as script tags (working approach from vision-demo-ar)
+        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
+        
+        // Access global variables after scripts are loaded
+        const threeMod = (window as any).THREE;
+        const mindarMod = (window as any).MINDAR;
+        const GLTFLoader = (window as any).THREE?.GLTFLoader;
 
-        // Wait for import map to be processed
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Dynamic imports using the working approach
-        const [threeMod, mindarMod, gltfLoaderMod] = await Promise.all([
-          import('three'),
-          import('mindar'),
-          import('three/addons/loaders/GLTFLoader.js')
-        ]);
+        if (!threeMod || !mindarMod || !GLTFLoader) {
+          throw new Error('Failed to load Three.js, MindAR, or GLTFLoader libraries');
+        }
 
         const { MindARThree } = mindarMod;
-        const { GLTFLoader } = gltfLoaderMod;
 
         // Initialize MindAR
         mindarThree = new MindARThree({ 
