@@ -17,9 +17,19 @@ export class QRScannerService {
         return;
       }
 
+      console.log('Creating Html5Qrcode scanner for element:', elementId);
+      
+      // Check if element exists
+      const element = document.getElementById(elementId);
+      if (!element) {
+        throw new Error(`Element with id '${elementId}' not found`);
+      }
+      console.log('Element found:', element);
+
       this.scanner = new Html5Qrcode(elementId);
       this.isScanning = true;
 
+      console.log('Starting camera with getUserMedia...');
       await this.scanner.start(
         { facingMode: 'environment' }, // Use back camera
         {
@@ -28,16 +38,20 @@ export class QRScannerService {
           aspectRatio: 1.0
         },
         (decodedText) => {
+          console.log('QR code detected:', decodedText);
           onScanSuccess(decodedText);
         },
         (errorMessage) => {
+          console.log('QR scanner error:', errorMessage);
           // Scanner errors are frequent (no QR in view), only log important ones
           if (onScanError && !errorMessage.includes('NotFoundException')) {
             onScanError(errorMessage);
           }
         }
       );
+      console.log('QR scanner started successfully');
     } catch (error) {
+      console.error('QR scanner start failed:', error);
       this.isScanning = false;
       throw new Error(`Failed to start scanner: ${error}`);
     }
