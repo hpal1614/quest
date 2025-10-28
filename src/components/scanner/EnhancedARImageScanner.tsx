@@ -52,6 +52,23 @@ export function EnhancedARImageScanner({
     rooeyGroup?: any;
   }>({});
 
+  // Helper function to load scripts dynamically
+  const loadScript = (src: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // Check if script already exists
+      if (document.querySelector(`script[src="${src}"]`)) {
+        resolve();
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+      document.head.appendChild(script);
+    });
+  };
+
   useEffect(() => {
     let isCancelled = false;
     
@@ -59,19 +76,21 @@ export function EnhancedARImageScanner({
       try {
         if (!containerRef.current) return;
 
-        // Dynamic imports for CDN libraries
-        const threeUrl = 'https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js';
-        const mindarUrl = 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js';
-        const gltfLoaderUrl = 'https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/loaders/GLTFLoader.js';
-
-        const [threeMod, mindarMod, gltfLoaderMod] = await Promise.all([
-          (Function('u', 'return import(u)'))(threeUrl),
-          (Function('u', 'return import(u)'))(mindarUrl),
-          (Function('u', 'return import(u)'))(gltfLoaderUrl)
-        ]);
+        // Load libraries as script tags to avoid module resolution issues
+        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
+        
+        // Access global variables after scripts are loaded
+        const threeMod = (window as any).THREE;
+        const mindarMod = (window as any).MINDAR;
+        const GLTFLoader = (window as any).THREE?.GLTFLoader;
+        
+        if (!threeMod || !mindarMod || !GLTFLoader) {
+          throw new Error('Failed to load Three.js, GLTFLoader, or MindAR libraries');
+        }
 
         const { MindARThree } = mindarMod;
-        const { GLTFLoader } = gltfLoaderMod;
 
         // Initialize MindAR
         mindarThreeRef.current = new MindARThree({ 

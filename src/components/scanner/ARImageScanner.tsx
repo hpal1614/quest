@@ -30,19 +30,38 @@ export function ARImageScanner({ onScan, onClose, targetSrc = '/assets/targets/p
 		let camera: any = null;
 		let anchor: any = null;
 
+		// Helper function to load scripts dynamically
+		const loadScript = (src: string): Promise<void> => {
+			return new Promise((resolve, reject) => {
+				// Check if script already exists
+				if (document.querySelector(`script[src="${src}"]`)) {
+					resolve();
+					return;
+				}
+				
+				const script = document.createElement('script');
+				script.src = src;
+				script.onload = () => resolve();
+				script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+				document.head.appendChild(script);
+			});
+		};
+
 		const start = async () => {
 			try {
 				if (!containerRef.current) return;
 
-				// Build URLs via variables so TypeScript won't try to resolve them at build time
-				const threeUrl = 'https://cdn.jsdelivr.net/npm/' + 'three@0.157.0/build/three.module.js';
-				const mindarUrl = 'https://cdn.jsdelivr.net/npm/' + 'mind-ar@1.2.5/dist/mindar-image-three.prod.js';
-
-				// Dynamic ESM imports (client-side only)
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const threeMod: any = await (Function('u', 'return import(u)'))(threeUrl);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const mindarMod: any = await (Function('u', 'return import(u)'))(mindarUrl);
+				// Load libraries as script tags to avoid module resolution issues
+				await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js');
+				await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
+				
+				// Access global variables after scripts are loaded
+				const threeMod = (window as any).THREE;
+				const mindarMod = (window as any).MINDAR;
+				
+				if (!threeMod || !mindarMod) {
+					throw new Error('Failed to load Three.js or MindAR libraries');
+				}
 
 				const { MindARThree } = mindarMod;
 
