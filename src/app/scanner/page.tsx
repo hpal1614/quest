@@ -166,13 +166,10 @@ export default function ScannerPage() {
           questTheme={quest?.theme}
         />
       ) : (
-        // Default: Enhanced AR with 3D models (NEW!)
-        <EnhancedARImageScanner
+        // Default: QR Scanner (more reliable than AR)
+        <RealQRScanner
           onScan={handleScanSuccess}
           onClose={handleClose}
-          markerCode={markerCode || 'MARKER-FOUND'}
-          targetSrc={targetSrc}
-          questTheme={quest?.theme}
         />
       )}
 

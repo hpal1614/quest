@@ -77,17 +77,15 @@ export function EnhancedARImageScanner({
         if (!containerRef.current) return;
 
         // Load libraries as script tags to avoid module resolution issues
-        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js');
-        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.js');
         await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
         
         // Access global variables after scripts are loaded
         const threeMod = (window as any).THREE;
         const mindarMod = (window as any).MINDAR;
-        const GLTFLoader = (window as any).THREE?.GLTFLoader;
         
-        if (!threeMod || !mindarMod || !GLTFLoader) {
-          throw new Error('Failed to load Three.js, GLTFLoader, or MindAR libraries');
+        if (!threeMod || !mindarMod) {
+          throw new Error('Failed to load Three.js or MindAR libraries');
         }
 
         const { MindARThree } = mindarMod;
@@ -111,10 +109,7 @@ export function EnhancedARImageScanner({
         dirLight.position.set(0.5, 1, 0.5);
         scene.add(dirLight);
 
-        // Load 3D models
-        await loadModels(threeMod, GLTFLoader);
-
-        // Set up target detection
+        // Set up target detection (without 3D models for now)
         setupTargetDetection();
 
         // Start AR
