@@ -1,6 +1,111 @@
 import { Quest } from '@/types/quest';
 
 export const QUESTS: Quest[] = [
+  // TEST QUESTS - Using your current location with postcard AR
+  {
+    id: 'quest_test_postcard_ar',
+    title: 'Test Quest - Postcard AR Adventure',
+    description: 'Test quest using postcard AR targets. All locations near your current position!',
+    weekNumber: 0,
+    startDate: '2024-01-01T00:00:00+11:00',
+    endDate: '2025-12-31T23:59:59+11:00',
+    status: 'active',
+    theme: {
+      color: '#8B5CF6',
+      mascot: 'ar_mascot',
+      icon: '🎯',
+      gradient: 'from-purple-500 to-violet-500'
+    },
+    estimatedDuration: 20,
+    locations: [
+      {
+        id: 'start',
+        name: 'AR Start Point',
+        type: 'start',
+        coordinates: { lat: -33.88151212693693, lng: 151.20427352594658 }, // Your CORRECT location
+        radius: 50,
+        clue: 'Point your camera at the postcard to begin the AR adventure!',
+        qrCode: 'POSTCARD-START',
+        question: null
+      },
+      {
+        id: 'location_a',
+        name: 'AR Checkpoint Alpha',
+        type: 'checkpoint',
+        coordinates: { lat: -33.8812, lng: 151.2045 }, // ~25m northeast
+        radius: 50,
+        clue: 'Find the postcard and scan it to reveal the first riddle!',
+        qrCode: 'POSTCARD-ALPHA',
+        question: {
+          text: 'What is the capital city of Australia?',
+          answer: 'Canberra',
+          alternativeAnswers: ['canberra', 'canberra city'],
+          hints: [
+            'It\'s not Sydney or Melbourne',
+            'It\'s a planned city built specifically to be the capital',
+            'The answer is Canberra'
+          ]
+        }
+      },
+      {
+        id: 'location_b',
+        name: 'AR Checkpoint Beta',
+        type: 'checkpoint',
+        coordinates: { lat: -33.8817, lng: 151.2040 }, // ~30m southwest
+        radius: 50,
+        clue: 'Another postcard awaits! Scan it for the next challenge.',
+        qrCode: 'POSTCARD-BETA',
+        question: {
+          text: 'What is the largest city in Australia?',
+          answer: 'Sydney',
+          alternativeAnswers: ['sydney', 'sydney city'],
+          hints: [
+            'It\'s the city you\'re currently in',
+            'It\'s known for the Opera House and Harbour Bridge',
+            'The answer is Sydney'
+          ]
+        }
+      },
+      {
+        id: 'location_c',
+        name: 'AR Checkpoint Gamma',
+        type: 'checkpoint',
+        coordinates: { lat: -33.8810, lng: 151.2048 }, // ~40m northeast
+        radius: 50,
+        clue: 'The final postcard challenge! Complete this to finish the quest.',
+        qrCode: 'POSTCARD-GAMMA',
+        question: {
+          text: 'What is the name of the famous bridge in Sydney?',
+          answer: 'Harbour Bridge',
+          alternativeAnswers: ['harbour bridge', 'sydney harbour bridge', 'harbor bridge'],
+          hints: [
+            'It\'s a steel arch bridge',
+            'It connects the CBD to the North Shore',
+            'The answer is Harbour Bridge'
+          ]
+        }
+      },
+      {
+        id: 'finish',
+        name: 'AR Finish Point',
+        type: 'finish',
+        coordinates: { lat: -33.88151212693693, lng: 151.20427352594658 }, // Back to start
+        radius: 50,
+        clue: 'Congratulations! You\'ve completed the AR adventure!',
+        qrCode: 'POSTCARD-FINISH',
+        question: null
+      }
+    ],
+    rewards: [
+      {
+        id: 'ar_badge',
+        name: 'AR Explorer Badge',
+        description: 'You\'ve mastered the art of AR questing!',
+        icon: '🎯',
+        unlocked: false
+      }
+    ]
+  },
   // Week 1: Urban Adventure (Nov 24-30)
   {
     id: 'quest_w1_urban',
