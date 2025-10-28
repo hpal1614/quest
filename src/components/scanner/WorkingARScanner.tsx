@@ -51,10 +51,11 @@ export function WorkingARScanner({ onScan, onClose, markerCode = 'MARKER-FOUND',
       try {
         if (!containerRef.current) return;
 
-        // Load libraries as script tags (working approach from vision-demo-ar)
-        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.js');
-        await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js');
-        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.js');
+        // Load libraries as script tags - use unpkg for reliable CDN delivery
+        // Three.js 0.143.0 is compatible with MindAR 1.2.5
+        await loadScript('https://unpkg.com/three@0.143.0/build/three.min.js');
+        await loadScript('https://unpkg.com/three@0.143.0/examples/js/loaders/GLTFLoader.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
         
         // Access global variables after scripts are loaded
         const threeMod = (window as any).THREE;
