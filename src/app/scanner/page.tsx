@@ -10,7 +10,6 @@ import { getQuestById } from '@/data/quests';
 import { validateQRCode } from '@/lib/scanner/validator';
 import { calculateDistance } from '@/lib/gps/distance';
 import { ARCardScanner } from '@/components/scanner/ARCardScanner';
-import { ARImageScanner } from '@/components/scanner/ARImageScanner';
 import { WorkingARScanner } from '@/components/scanner/WorkingARScanner';
 import { RealQRScanner } from '@/components/scanner/RealQRScanner';
 import { MockScanner } from '@/components/scanner/MockScanner';
@@ -168,12 +167,11 @@ export default function ScannerPage() {
           onClose={handleClose}
         />
       ) : useMarker ? (
-        // Marker-based AR mode (MindAR + three.js) - Enhanced version
-        <EnhancedARImageScanner
+        // Marker-based AR mode (MindAR + three.js) - Working version
+        <WorkingARScanner
           onScan={handleScanSuccess}
           onClose={handleClose}
           markerCode={markerCode}
-          targetSrc={targetSrc}
           questTheme={quest?.theme}
         />
       ) : (
