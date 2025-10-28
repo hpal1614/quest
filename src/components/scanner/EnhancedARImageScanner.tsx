@@ -110,7 +110,22 @@ export function EnhancedARImageScanner({
 
       } catch (err) {
         console.error('AR initialization failed:', err);
-        setError('Failed to start AR. Ensure HTTPS and camera permissions.');
+        
+        // Provide more specific error messages
+        if (err instanceof Error) {
+          if (err.message.includes('NotAllowedError') || err.message.includes('Permission denied')) {
+            setError('Camera permission denied. Please allow camera access and refresh.');
+          } else if (err.message.includes('NotReadableError') || err.message.includes('Could not start video source')) {
+            setError('Camera is in use by another app. Please close other camera apps and refresh.');
+          } else if (err.message.includes('NotSupportedError') || err.message.includes('HTTPS')) {
+            setError('AR requires HTTPS. Please use QR mode or deploy with HTTPS.');
+          } else {
+            setError(`AR failed: ${err.message}. Try QR mode or mock mode.`);
+          }
+        } else {
+          setError('Failed to start AR. Try QR mode (?qr=true) or mock mode (?mock=true).');
+        }
+        
         setArState('error');
         setIsStarting(false);
       }
@@ -380,12 +395,28 @@ export function EnhancedARImageScanner({
         <div className="absolute bottom-20 left-0 right-0 px-4">
           <div className="max-w-md mx-auto bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg">
             <p className="text-sm font-medium">{error}</p>
-            <button
-              onClick={handleClose}
-              className="mt-2 text-xs underline hover:no-underline"
-            >
-              Go back
-            </button>
+            
+            {/* Mode switching buttons */}
+            <div className="mt-3 flex gap-2 text-xs flex-wrap">
+              <button
+                onClick={() => window.location.href = window.location.pathname + '?qr=true' + (window.location.search.includes('questId=') ? '' : '&questId=quest_test_postcard_ar')}
+                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
+              >
+                QR Mode
+              </button>
+              <button
+                onClick={() => window.location.href = window.location.pathname + '?mock=true' + (window.location.search.includes('questId=') ? '' : '&questId=quest_test_postcard_ar')}
+                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
+              >
+                Mock Mode
+              </button>
+              <button
+                onClick={handleClose}
+                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
+              >
+                Go back
+              </button>
+            </div>
           </div>
         </div>
       )}
