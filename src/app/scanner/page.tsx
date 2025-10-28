@@ -11,7 +11,7 @@ import { validateQRCode } from '@/lib/scanner/validator';
 import { calculateDistance } from '@/lib/gps/distance';
 import { ARCardScanner } from '@/components/scanner/ARCardScanner';
 import { ARImageScanner } from '@/components/scanner/ARImageScanner';
-import { EnhancedARImageScanner } from '@/components/scanner/EnhancedARImageScanner';
+import { WorkingARScanner } from '@/components/scanner/WorkingARScanner';
 import { RealQRScanner } from '@/components/scanner/RealQRScanner';
 import { MockScanner } from '@/components/scanner/MockScanner';
 import { ARMascotView } from '@/components/ar/ARMascotView';
@@ -177,12 +177,11 @@ export default function ScannerPage() {
           questTheme={quest?.theme}
         />
       ) : (
-        // Default: Enhanced AR with same postcard for all locations
-        <EnhancedARImageScanner
+        // Default: Working AR with same postcard for all locations
+        <WorkingARScanner
           onScan={handleScanSuccess}
           onClose={handleClose}
           markerCode={getCurrentLocationQRCode()}
-          targetSrc={targetSrc || '/assets/targets/postcard.mind'}
           questTheme={quest?.theme}
         />
       )}
