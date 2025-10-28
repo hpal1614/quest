@@ -9,7 +9,6 @@ import { useQuestStore } from '@/store/questStore';
 import { getQuestById } from '@/data/quests';
 import { validateQRCode } from '@/lib/scanner/validator';
 import { calculateDistance } from '@/lib/gps/distance';
-import { ARCardScanner } from '@/components/scanner/ARCardScanner';
 import { WorkingARScanner } from '@/components/scanner/WorkingARScanner';
 import { RealQRScanner } from '@/components/scanner/RealQRScanner';
 import { MockScanner } from '@/components/scanner/MockScanner';
