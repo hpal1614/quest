@@ -54,14 +54,17 @@ export function WorkingARScanner({ onScan, onClose, markerCode = 'MARKER-FOUND',
         // Load libraries as script tags (working approach from vision-demo-ar)
         await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.js');
         await loadScript('https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js');
-        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.js');
         
         // Access global variables after scripts are loaded
         const threeMod = (window as any).THREE;
         const mindarMod = (window as any).MINDAR;
         const GLTFLoader = (window as any).THREE?.GLTFLoader;
 
+        console.log('Loaded libraries:', { threeMod, mindarMod, GLTFLoader });
+
         if (!threeMod || !mindarMod || !GLTFLoader) {
+          console.error('Missing libraries:', { threeMod, mindarMod, GLTFLoader });
           throw new Error('Failed to load Three.js, MindAR, or GLTFLoader libraries');
         }
 
