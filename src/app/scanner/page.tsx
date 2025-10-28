@@ -109,6 +109,17 @@ export default function ScannerPage() {
     router.back();
   };
 
+  // Helper function to get the correct QR code for current quest progress
+  const getCurrentLocationQRCode = () => {
+    if (!quest) return 'POSTCARD-START';
+    
+    const progress = getQuestProgress(quest.id);
+    const currentLocationId = progress?.currentLocationId || 'start';
+    const currentLocation = quest.locations.find(l => l.id === currentLocationId);
+    
+    return currentLocation?.qrCode || 'POSTCARD-START';
+  };
+
   if (!quest) {
     return null;
   }
@@ -166,10 +177,13 @@ export default function ScannerPage() {
           questTheme={quest?.theme}
         />
       ) : (
-        // Default: QR Scanner (more reliable than AR)
-        <RealQRScanner
+        // Default: Enhanced AR with same postcard for all locations
+        <EnhancedARImageScanner
           onScan={handleScanSuccess}
           onClose={handleClose}
+          markerCode={getCurrentLocationQRCode()}
+          targetSrc={targetSrc || '/assets/targets/postcard.mind'}
+          questTheme={quest?.theme}
         />
       )}
 
