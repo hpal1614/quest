@@ -21,12 +21,10 @@ export function ARScene({
   isPaused 
 }: ARSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mindarThreeRef = useRef<any>(null);
   const [status, setStatus] = useState<'loading' | 'requesting-camera' | 'loading-libraries' | 'initializing' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [isMarkerVisible, setIsMarkerVisible] = useState(false);
-  
-  let mindarThree: any = null;
-  let testStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     initializeAR();
@@ -37,52 +35,12 @@ export function ARScene({
   }, []);
 
   useEffect(() => {
-    if (isPaused && mindarThree) {
-      // Pause AR when overlay is open
-      mindarThree.stop();
-    } else if (!isPaused && mindarThree && status === 'ready') {
-      // Resume AR when overlay closes
-      mindarThree.start();
+    if (isPaused && mindarThreeRef.current) {
+      mindarThreeRef.current.stop();
+    } else if (!isPaused && mindarThreeRef.current && status === 'ready') {
+      mindarThreeRef.current.start();
     }
   }, [isPaused]);
-
-  const loadScript = (src: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (document.querySelector(`script[src="${src}"]`)) {
-        resolve();
-        return;
-      }
-      
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-      document.head.appendChild(script);
-    });
-  };
-
-  const waitForLibraries = (): Promise<void> => {
-    return new Promise((resolve) => {
-      const checkLibraries = () => {
-        const THREE = (window as any).THREE;
-        const MINDAR = (window as any).MINDAR;
-        
-        console.log('Checking libraries:', { 
-          THREE: !!THREE, 
-          MINDAR: !!MINDAR,
-          THREE_GLTFLoader: !!(THREE && THREE.GLTFLoader)
-        });
-        
-        if (THREE && MINDAR && THREE.GLTFLoader) {
-          console.log('All libraries ready!');
-          resolve();
-        } else {
-          setTimeout(checkLibraries, 100);
-        }
-      };
-      checkLibraries();
-    });
-  };
 
   const initializeAR = async () => {
     try {
@@ -99,119 +57,108 @@ export function ARScene({
       });
       console.log('Camera permission granted');
       
-      // Keep the stream alive but don't use it for display
-      // MindAR will create its own stream, but permission is already granted
-      testStreamRef.current = stream;
+      // Stop the test stream - MindAR will create its own
+      stream.getTracks().forEach(track => track.stop());
 
-      // Step 2: Load libraries using script tags (React-compatible approach)
+      // Step 2: Load MindAR and Three.js using dynamic script loading
       setStatus('loading-libraries');
       console.log('Loading AR libraries...');
 
-      // Load Three.js first (compatible version)
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-      console.log('Three.js loaded');
-
-      // Load GLTFLoader
-      await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js');
-      console.log('GLTFLoader loaded');
-
-      // Load MindAR - create inline module script to expose to window
-      console.log('Loading MindAR as ES module...');
-      const mindarScript = document.createElement('script');
-      mindarScript.type = 'module';
-      mindarScript.innerHTML = `
-        import * as MINDAR_MODULE from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js';
-        window.MINDAR = MINDAR_MODULE;
-        window.mindarLoaded = true;
-        console.log('MindAR module loaded and exposed to window.MINDAR');
-      `;
-      document.head.appendChild(mindarScript);
-      
-      // Wait for MindAR to load
-      await new Promise((resolve) => {
-        const checkMindAR = () => {
-          if ((window as any).mindarLoaded) {
-            console.log('MindAR confirmed loaded');
-            resolve(true);
-          } else {
-            setTimeout(checkMindAR, 100);
+      // Create inline ES module script (like working example but runtime-compatible)
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.textContent = `
+          import { MindARThree } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js';
+          import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js';
+          import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/loaders/GLTFLoader.js';
+          
+          window.MindARThree = MindARThree;
+          window.THREE = THREE;
+          window.GLTFLoader = GLTFLoader;
+          window.arLibsLoaded = true;
+          console.log('AR libraries loaded and exposed to window');
+        `;
+        script.onerror = () => reject(new Error('Failed to load AR libraries'));
+        document.head.appendChild(script);
+        
+        // Wait for libraries to be available
+        const checkInterval = setInterval(() => {
+          if ((window as any).arLibsLoaded) {
+            clearInterval(checkInterval);
+            resolve();
           }
-        };
-        checkMindAR();
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          reject(new Error('AR libraries loading timeout'));
+        }, 10000);
       });
+      
+      console.log('All AR libraries loaded successfully!');
+      
+      const { MindARThree } = (window as any);
+      const THREE = (window as any).THREE;
+      const { GLTFLoader } = (window as any);
 
-      // Step 3: Wait for libraries to be ready
-      await waitForLibraries();
-
-      // Step 4: Initialize MindAR
+      // Step 3: Initialize MindAR (exactly like the working example)
       setStatus('initializing');
       console.log('Initializing MindAR...');
 
-      console.log('Creating MindAR instance...');
-      console.log('Container element:', containerRef.current);
-      console.log('Target file path:', markerFile);
-      
       // Check if target file is accessible
       try {
         const response = await fetch(markerFile);
-        console.log('Target file accessible:', response.ok);
         if (!response.ok) {
           throw new Error(`Target file not accessible: ${response.status}`);
         }
-      } catch (error) {
-        console.error('Target file check failed:', error);
-        throw new Error('AR target file not found. Please check if postcard.mind exists.');
+        console.log('Target file accessible:', response.ok);
+      } catch (err) {
+        console.error('Target file check failed:', err);
+        throw new Error('AR target file not found');
       }
       
-      const { MindARThree } = (window as any).MINDAR;
-      const THREE = (window as any).THREE;
-      
-      mindarThree = new MindARThree({
+      // Create MindAR instance
+      const mindarThree = new MindARThree({
         container: containerRef.current,
         imageTargetSrc: markerFile
       });
+      mindarThreeRef.current = mindarThree;
       console.log('MindAR instance created successfully');
 
       const { renderer, scene, camera } = mindarThree;
       const anchor = mindarThree.addAnchor(0);
 
-      // Add lighting (using global THREE)
+      // Add lighting (matching the working example)
       const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
       scene.add(hemiLight);
       const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
       dirLight.position.set(0.5, 1, 0.5);
       scene.add(dirLight);
 
-      // Load 3D mascot model (using global GLTFLoader)
-      const gltfLoader = new THREE.GLTFLoader();
+      // Load 3D model
+      const gltfLoader = new GLTFLoader();
+      console.log('Loading 3D model:', mascotModel);
       
-      // Load Oliver model
-      const oliverGltf = await gltfLoader.loadAsync(mascotModel);
-      const oliver = oliverGltf.scene.clone();
-      oliver.scale.setScalar(0.08);
-      oliver.position.set(0, 0, 0);
+      const gltf = await gltfLoader.loadAsync(mascotModel);
+      const model = gltf.scene.clone();
+      model.scale.setScalar(0.08);
+      model.position.set(0, 0, 0);
       
-      // Play idle animation if available (Oliver's biped animations)
-      if (oliverGltf.animations && oliverGltf.animations.length > 0) {
-        const mixer = new THREE.AnimationMixer(oliver);
-        const action = mixer.clipAction(oliverGltf.animations[0]);
+      // Play animation if available
+      let mixer: any = null;
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(model);
+        const action = mixer.clipAction(gltf.animations[0]);
         action.play();
-        
-        // Update animation loop
-        const clock = new THREE.Clock();
-        const animate = () => {
-          if (!isPaused) {
-            mixer.update(clock.getDelta());
-          }
-          requestAnimationFrame(animate);
-        };
-        animate();
+        console.log('Model animation started');
       }
       
-      anchor.group.add(oliver);
-      console.log('Oliver model loaded and added to scene');
+      anchor.group.add(model);
+      console.log('Model loaded and added to scene');
       
-      // Notify parent that Oliver is loaded
+      // Notify parent that model is loaded
       onMascotLoaded();
 
       // Set up marker detection events
@@ -227,34 +174,35 @@ export function ARScene({
         onMarkerLost();
       };
 
+      // Animation loop for model animations
+      const clock = new THREE.Clock();
+      const animate = () => {
+        if (mixer && !isPaused) {
+          mixer.update(clock.getDelta());
+        }
+        requestAnimationFrame(animate);
+      };
+      animate();
+
       // Start AR
+      console.log('Starting MindAR...');
       await mindarThree.start();
       console.log('MindAR started successfully');
-      
-      // Stop the test stream since MindAR has its own
-      if (testStreamRef.current) {
-        testStreamRef.current.getTracks().forEach(track => track.stop());
-        testStreamRef.current = null;
-      }
       
       setStatus('ready');
       console.log('AR Scene ready!');
 
-    } catch (error) {
-      console.error('AR initialization failed:', error);
-      setError(error instanceof Error ? error.message : 'AR initialization failed');
+    } catch (err) {
+      console.error('AR initialization failed:', err);
+      setError(err instanceof Error ? err.message : 'AR initialization failed');
       setStatus('error');
     }
   };
 
   const cleanup = () => {
-    if (mindarThree) {
-      mindarThree.stop();
-      mindarThree = null;
-    }
-    if (testStreamRef.current) {
-      testStreamRef.current.getTracks().forEach(track => track.stop());
-      testStreamRef.current = null;
+    if (mindarThreeRef.current) {
+      mindarThreeRef.current.stop();
+      mindarThreeRef.current = null;
     }
   };
 
