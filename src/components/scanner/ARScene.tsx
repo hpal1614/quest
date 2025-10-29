@@ -246,6 +246,17 @@ export function ARScene({
         console.log('Model animation started');
       }
       
+      // Add GIANT RED SPHERE for absolute visibility test
+      const sphereGeo = new THREE.SphereGeometry(0.5, 32, 32); // Half-meter sphere
+      const sphereMat = new THREE.MeshBasicMaterial({ 
+        color: 0xff0000,
+        wireframe: false
+      });
+      const redSphere = new THREE.Mesh(sphereGeo, sphereMat);
+      redSphere.position.set(0, 0.5, 0); // Half meter above marker
+      anchor.group.add(redSphere);
+      console.log('🔴 GIANT RED SPHERE added at (0, 0.5, 0)');
+      
       // Wrap Oliver in a Group (EXACT approach from vision-ar line 83)
       const oliverGroup = new THREE.Group();
       oliverGroup.name = 'oliverGroup';
@@ -254,15 +265,15 @@ export function ARScene({
       // Position the group (like Rooey at line 85: position.set(0.35, 0, 0))
       // Center Oliver on the marker
       oliverGroup.position.set(0, 0, 0);
-      oliverGroup.visible = false; // Start hidden, show on marker found
+      oliverGroup.visible = true; // CHANGED: Start visible to test
       
       // Store in ref
       oliverGroupRef.current = oliverGroup;
       
       // Add to anchor
       anchor.group.add(oliverGroup);
-      console.log('✅ Oliver group added to anchor');
-      console.log('📦 Anchor children:', anchor.group.children.length);
+      console.log('✅ Oliver group added to anchor (ALWAYS VISIBLE for testing)');
+      console.log('📦 Anchor children:', anchor.group.children.length, '(should be 2: sphere + Oliver)');
       
       // Notify parent that model is loaded
       onMascotLoaded();
