@@ -223,26 +223,34 @@ export function ARScene({
       // Create a THREE.Group to hold everything
       const content = new THREE.Group();
       
+      // CRITICAL FIX: Position the group FORWARD (positive Z) so it's in front of camera
+      content.position.set(0, 0, 0.5); // Move 0.5 units forward from marker
+      
       // Add a HUGE bright red cube that's IMPOSSIBLE to miss
       const debugGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
       const debugMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xff0000,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        depthTest: false // Always render on top
       });
       const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
-      debugCube.position.set(0, 0.2, 0); // Floating above
+      debugCube.position.set(0, 0, 0); // Center of marker
       content.add(debugCube);
-      console.log('🔴 Red debug cube created at (0, 0.2, 0)');
+      console.log('🔴 Red debug cube created at center (0, 0, 0)');
       
-      // Add Oliver model
+      // Add Oliver model slightly below cube
+      model.position.set(0, -0.3, 0); // Below the cube
       content.add(model);
-      console.log('✅ Oliver added to content group');
+      console.log('✅ Oliver added to content group below cube');
       
       // Add the entire group to anchor
       anchor.group.add(content);
-      console.log('📦 Content group added to anchor. Total children:', anchor.group.children.length);
-      console.log('🎯 Anchor position:', anchor.group.position);
-      console.log('👁️ Model visible:', model.visible, 'Children:', model.children.length);
+      console.log('📦 Content group added to anchor at position:', content.position);
+      console.log('🎯 Total objects in scene:', {
+        sceneChildren: scene.children.length,
+        anchorChildren: anchor.group.children.length,
+        contentChildren: content.children.length
+      });
       
       // Notify parent that model is loaded
       onMascotLoaded();
