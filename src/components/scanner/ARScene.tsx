@@ -198,25 +198,39 @@ export function ARScene({
       const oliver = gltf.scene;
       
       // EXACT APPROACH FROM WORKING EXAMPLE (lines 62-80 of app.js)
-      // Disable frustum culling first
+      // Disable frustum culling first and ensure proper material rendering
       oliver.traverse((n: any) => {
         if (n.isMesh) {
           n.frustumCulled = false;
           if (n.material) {
+            // Ensure material is visible
+            n.material.transparent = false;
+            n.material.opacity = 1.0;
+            n.material.visible = true;
+            n.material.side = THREE.DoubleSide; // Render both sides
             n.material.needsUpdate = true;
+            console.log('📦 Mesh found:', n.name, 'material:', n.material.type);
           }
+          n.visible = true;
+          n.renderOrder = 0;
         }
+      });
+      
+      console.log('✅ Oliver scene structure:', {
+        children: oliver.children.length,
+        type: oliver.type,
+        visible: oliver.visible
       });
       
       // Auto-scale using bounding box (EXACT method from vision-ar)
       try {
         const bbox0 = new THREE.Box3().setFromObject(oliver);
         const h0 = bbox0.max.y - bbox0.min.y;
-        let scale = 0.08; // fallback
+        let scale = 0.15; // Increased fallback for better visibility
         if (isFinite(h0) && h0 > 0.0001) {
-          const targetHeight = 0.12; // ~12cm in AR units (same as Rooey)
+          const targetHeight = 0.25; // Increased from 0.12 to 0.25 for better visibility
           scale = targetHeight / h0;
-          scale = Math.max(0.02, Math.min(scale, 0.18)); // Clamp
+          scale = Math.max(0.1, Math.min(scale, 0.5)); // Increased min/max range
         }
         oliver.scale.setScalar(scale);
         
@@ -227,10 +241,10 @@ export function ARScene({
         const bbox2 = new THREE.Box3().setFromObject(oliver);
         oliver.position.y -= bbox2.min.y; // Ground it
         
-        console.log('✅ Oliver auto-scaled to', scale, 'height:', h0);
+        console.log('✅ Oliver auto-scaled to', scale, 'height:', h0, 'bbox0:', bbox0);
       } catch(e) {
-        oliver.scale.setScalar(0.08);
-        console.warn('Bounding box scaling failed, using fallback 0.08');
+        oliver.scale.setScalar(0.15);
+        console.warn('Bounding box scaling failed, using fallback 0.15', e);
       }
       
       const model = oliver;
@@ -263,8 +277,9 @@ export function ARScene({
       oliverGroup.add(model);
       
       // Position the group (like Rooey at line 85: position.set(0.35, 0, 0))
-      // Center Oliver on the marker
+      // Center Oliver on the marker, slightly raised for better visibility
       oliverGroup.position.set(0, 0, 0);
+      oliverGroup.rotation.set(0, 0, 0);
       oliverGroup.visible = true; // CHANGED: Start visible to test
       
       // Store in ref
@@ -274,6 +289,12 @@ export function ARScene({
       anchor.group.add(oliverGroup);
       console.log('✅ Oliver group added to anchor (ALWAYS VISIBLE for testing)');
       console.log('📦 Anchor children:', anchor.group.children.length, '(should be 2: sphere + Oliver)');
+      console.log('📊 Oliver group details:', {
+        position: oliverGroup.position,
+        scale: oliverGroup.scale,
+        visible: oliverGroup.visible,
+        childrenCount: oliverGroup.children.length
+      });
       
       // Notify parent that model is loaded
       onMascotLoaded();
@@ -287,6 +308,16 @@ export function ARScene({
           if (oliverGroupRef.current) {
             oliverGroupRef.current.visible = true;
             console.log('✅ Oliver group set to visible');
+            console.log('📍 Oliver position:', oliverGroupRef.current.position);
+            console.log('📏 Oliver scale:', oliverGroupRef.current.scale);
+            console.log('🔍 Oliver children:', oliverGroupRef.current.children.length);
+            
+            // Log each mesh visibility
+            oliverGroupRef.current.traverse((node: any) => {
+              if (node.isMesh) {
+                console.log('🔸 Mesh:', node.name, 'visible:', node.visible, 'material:', node.material?.visible);
+              }
+            });
             
             // Play animations if available
             if (mixerRef.current && gltfRef.current) {
