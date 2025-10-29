@@ -219,11 +219,22 @@ export function ARScene({
         console.log('Model animation started');
       }
       
-      // Add Oliver model directly to anchor (no debug cube needed anymore)
+      // Add debug cube to verify rendering
+      const debugGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+      const debugMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00ff00, // Green cube
+        wireframe: false
+      });
+      const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
+      debugCube.position.set(0, 0.6, 0); // Above Oliver's head
+      anchor.group.add(debugCube);
+      console.log('🟢 Small green cube added above Oliver');
+      
+      // Add Oliver model
       model.position.set(0, 0, 0); // Center on marker
       anchor.group.add(model);
       console.log('✅ Oliver added to anchor at center (0,0,0)');
-      console.log('📦 Oliver in scene with', anchor.group.children.length, 'children in anchor');
+      console.log('📦 Total in anchor:', anchor.group.children.length, '- should be 2 (cube + Oliver)');
       
       // Notify parent that model is loaded
       onMascotLoaded();
