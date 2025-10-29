@@ -22,6 +22,9 @@ export function ARScene({
 }: ARSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mindarThreeRef = useRef<any>(null);
+  const oliverGroupRef = useRef<any>(null);
+  const mixerRef = useRef<any>(null);
+  const gltfRef = useRef<any>(null);
   const [status, setStatus] = useState<'loading' | 'requesting-camera' | 'loading-libraries' | 'initializing' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [isMarkerVisible, setIsMarkerVisible] = useState(false);
@@ -192,71 +195,129 @@ export function ARScene({
       console.log('Loading 3D model:', mascotModel);
       
       const gltf = await gltfLoader.loadAsync(mascotModel);
-      const model = gltf.scene.clone();
+      const oliver = gltf.scene;
       
-      // Use the scale that worked when you could see it
-      model.scale.set(1.0, 1.0, 1.0); // This scale showed Oliver before
-      model.position.set(0, 0, 0); // Center on marker
-      model.rotation.set(0, 0, 0); // No rotation
-      
-      console.log('🎯 Oliver loaded - scale:', model.scale, 'position:', model.position);
-      
-      // Ensure model is visible
-      model.visible = true;
-      model.traverse((child: any) => {
-        if (child.isMesh) {
-          child.visible = true;
-          child.frustumCulled = false; // Prevent culling
+      // EXACT APPROACH FROM WORKING EXAMPLE (lines 62-80 of app.js)
+      // Disable frustum culling first
+      oliver.traverse((n: any) => {
+        if (n.isMesh) {
+          n.frustumCulled = false;
+          if (n.material) {
+            n.material.needsUpdate = true;
+          }
         }
       });
       
+      // Auto-scale using bounding box (EXACT method from vision-ar)
+      try {
+        const bbox0 = new THREE.Box3().setFromObject(oliver);
+        const h0 = bbox0.max.y - bbox0.min.y;
+        let scale = 0.08; // fallback
+        if (isFinite(h0) && h0 > 0.0001) {
+          const targetHeight = 0.12; // ~12cm in AR units (same as Rooey)
+          scale = targetHeight / h0;
+          scale = Math.max(0.02, Math.min(scale, 0.18)); // Clamp
+        }
+        oliver.scale.setScalar(scale);
+        
+        // Recenter and ground the model
+        const bbox1 = new THREE.Box3().setFromObject(oliver);
+        const center1 = bbox1.getCenter(new THREE.Vector3());
+        oliver.position.sub(center1);
+        const bbox2 = new THREE.Box3().setFromObject(oliver);
+        oliver.position.y -= bbox2.min.y; // Ground it
+        
+        console.log('✅ Oliver auto-scaled to', scale, 'height:', h0);
+      } catch(e) {
+        oliver.scale.setScalar(0.08);
+        console.warn('Bounding box scaling failed, using fallback 0.08');
+      }
+      
+      const model = oliver;
+      
+      // Store gltf in ref for later use
+      gltfRef.current = gltf;
+      
       // Play animation if available
-      let mixer: any = null;
       if (gltf.animations && gltf.animations.length > 0) {
-        mixer = new THREE.AnimationMixer(model);
-        const action = mixer.clipAction(gltf.animations[0]);
+        mixerRef.current = new THREE.AnimationMixer(model);
+        const action = mixerRef.current.clipAction(gltf.animations[0]);
         action.play();
         console.log('Model animation started');
       }
       
-      // Add debug cube to verify rendering
-      const debugGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-      const debugMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x00ff00, // Green cube
-        wireframe: false
-      });
-      const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
-      debugCube.position.set(0, 0.6, 0); // Above Oliver's head
-      anchor.group.add(debugCube);
-      console.log('🟢 Small green cube added above Oliver');
+      // Wrap Oliver in a Group (EXACT approach from vision-ar line 83)
+      const oliverGroup = new THREE.Group();
+      oliverGroup.name = 'oliverGroup';
+      oliverGroup.add(model);
       
-      // Add Oliver model
-      model.position.set(0, 0, 0); // Center on marker
-      anchor.group.add(model);
-      console.log('✅ Oliver added to anchor at center (0,0,0)');
-      console.log('📦 Total in anchor:', anchor.group.children.length, '- should be 2 (cube + Oliver)');
+      // Position the group (like Rooey at line 85: position.set(0.35, 0, 0))
+      // Center Oliver on the marker
+      oliverGroup.position.set(0, 0, 0);
+      oliverGroup.visible = false; // Start hidden, show on marker found
+      
+      // Store in ref
+      oliverGroupRef.current = oliverGroup;
+      
+      // Add to anchor
+      anchor.group.add(oliverGroup);
+      console.log('✅ Oliver group added to anchor');
+      console.log('📦 Anchor children:', anchor.group.children.length);
       
       // Notify parent that model is loaded
       onMascotLoaded();
 
-      // Set up marker detection events
+      // Set up marker detection events (EXACT from vision-ar lines 266-399)
       anchor.onTargetFound = () => {
-        console.log('🎯 Marker detected - Oliver should appear!');
+        console.log('🎯 Target found - showing Oliver!');
+        
+        // Show Oliver immediately (like burjModel.visible = true at line 271)
+        try {
+          if (oliverGroupRef.current) {
+            oliverGroupRef.current.visible = true;
+            console.log('✅ Oliver group set to visible');
+            
+            // Play animations if available
+            if (mixerRef.current && gltfRef.current) {
+              try {
+                const anims = gltfRef.current.animations;
+                if (anims && anims.length > 0) {
+                  const firstAction = mixerRef.current.clipAction(anims[0]);
+                  firstAction.play();
+                  console.log('▶️ Animation playing');
+                }
+              } catch(e) {
+                console.warn('Animation start failed:', e);
+              }
+            }
+          }
+        } catch(e) {
+          console.error('Target found handler error:', e);
+        }
+        
         setIsMarkerVisible(true);
         onMarkerDetected();
       };
 
       anchor.onTargetLost = () => {
-        console.log('Marker lost');
+        console.log('❌ Target lost - hiding Oliver');
+        
+        // Hide Oliver when marker lost (like line 383)
+        try {
+          if (oliverGroupRef.current) {
+            oliverGroupRef.current.visible = false;
+          }
+        } catch(e) {}
+        
         setIsMarkerVisible(false);
         onMarkerLost();
       };
 
-      // Animation loop for model animations
+      // Animation loop for model animations (using refs)
       const clock = new THREE.Clock();
       const animate = () => {
-        if (mixer && !isPaused) {
-          mixer.update(clock.getDelta());
+        if (mixerRef.current && !isPaused) {
+          mixerRef.current.update(clock.getDelta());
         }
         requestAnimationFrame(animate);
       };
@@ -289,6 +350,9 @@ export function ARScene({
       mindarThreeRef.current.stop();
       mindarThreeRef.current = null;
     }
+    oliverGroupRef.current = null;
+    mixerRef.current = null;
+    gltfRef.current = null;
   };
 
   const getStatusMessage = () => {
