@@ -194,9 +194,8 @@ export function ARScene({
       const gltf = await gltfLoader.loadAsync(mascotModel);
       const model = gltf.scene.clone();
       
-      // Use AR marker-friendly scale and position (like Burj Khalifa in vision-ar)
-      // Burj Khalifa was very visible, so using similar scale
-      model.scale.set(1, 1, 1); // Standard 1:1 scale (much larger than 0.5!)
+      // Scale Oliver to reasonable AR size - smaller than the massive debug cube
+      model.scale.set(0.3, 0.3, 0.3); // Good visible size for AR
       model.position.set(0, 0, 0); // Center on marker
       model.rotation.set(0, 0, 0); // No rotation
       
@@ -220,74 +219,24 @@ export function ARScene({
         console.log('Model animation started');
       }
       
-      // MASSIVE DEBUG CUBE - If this doesn't show, rendering is broken
-      const HUGE_SIZE = 2.0; // 2 meters cube!
-      const debugGeometry = new THREE.BoxGeometry(HUGE_SIZE, HUGE_SIZE, HUGE_SIZE);
-      const debugMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xff0000,
-        wireframe: false,
-        side: THREE.DoubleSide,
-        transparent: false,
-        opacity: 1.0,
-        depthTest: false,
-        depthWrite: false
-      });
-      const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
-      debugCube.position.set(0, 0, 0); // Dead center
-      
-      // Add cube DIRECTLY to anchor (skip grouping for now)
-      anchor.group.add(debugCube);
-      console.log('🔴 MASSIVE 2m RED CUBE added directly to anchor at (0,0,0)');
-      console.log('🔴 Cube properties:', {
-        position: debugCube.position,
-        scale: debugCube.scale,
-        visible: debugCube.visible,
-        renderOrder: debugCube.renderOrder
-      });
-      
-      // Add Oliver model
-      model.position.set(0, -1, 0); // Below the massive cube
+      // Add Oliver model directly to anchor (no debug cube needed anymore)
+      model.position.set(0, 0, 0); // Center on marker
       anchor.group.add(model);
-      console.log('✅ Oliver added to anchor at (0,-1,0)');
-      
-      console.log('📦 Total in anchor:', anchor.group.children.length);
-      console.log('🎯 Anchor group properties:', {
-        position: anchor.group.position,
-        scale: anchor.group.scale,
-        visible: anchor.group.visible,
-        children: anchor.group.children.length
-      });
+      console.log('✅ Oliver added to anchor at center (0,0,0)');
+      console.log('📦 Oliver in scene with', anchor.group.children.length, 'children in anchor');
       
       // Notify parent that model is loaded
       onMascotLoaded();
 
       // Set up marker detection events
       anchor.onTargetFound = () => {
-        console.log('🎯 MARKER DETECTED! Anchor should be visible now');
-        console.log('📦 Anchor children count:', anchor.group.children.length);
-        console.log('👁️ Anchor visible:', anchor.group.visible);
-        console.log('🎥 Renderer info:', {
-          rendering: true,
-          canvas: !!renderer.domElement,
-          canvasVisible: renderer.domElement.style.display !== 'none',
-          canvasSize: { w: renderer.domElement.width, h: renderer.domElement.height }
-        });
-        console.log('📹 Camera info:', {
-          position: camera.position,
-          rotation: camera.rotation,
-          fov: camera.fov || 'N/A'
-        });
-        
-        // Force a manual render to test
-        renderer.render(scene, camera);
-        console.log('🎬 Manual render triggered');
-        
+        console.log('🎯 Marker detected - Oliver should appear!');
         setIsMarkerVisible(true);
         onMarkerDetected();
       };
 
       anchor.onTargetLost = () => {
-        console.log('❌ Marker lost');
+        console.log('Marker lost');
         setIsMarkerVisible(false);
         onMarkerLost();
       };
