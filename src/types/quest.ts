@@ -19,8 +19,15 @@ export interface Location {
   coordinates: Coordinates;
   radius: number; // meters
   clue: string;
-  qrCode: string;
+  qrCode?: string; // Optional QR code
   question: Question | null; // Start location has no question
+  arRiddle?: {
+    text: string;
+    answer: string;
+    hints: string[];
+    mascotModel: string; // 3D model file path
+    markerFile: string; // MindAR marker file path
+  };
 }
 
 export interface Reward {
@@ -99,16 +106,4 @@ export interface ValidationResult {
   distance?: number;
 }
 
-export interface QRValidation {
-  scannedCode: string;
-  expectedFormat: string;
-  validation: {
-    isValid: boolean;
-    belongsToQuest: string | null;
-    locationId: string | null;
-    isCorrectSequence: boolean;
-    isWithinRadius: boolean;
-    errorMessage: string | null;
-  };
-}
 

@@ -1,40 +1,34 @@
-// Scanner Page - AR CARD RECOGNITION
+// Scanner Page - AR Scavenger Hunt
 
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import { useQuestStore } from '@/store/questStore';
+import { useQuestProgress } from '@/hooks/useQuestProgress';
 import { getQuestById } from '@/data/quests';
-import { validateQRCode } from '@/lib/scanner/validator';
-import { calculateDistance } from '@/lib/gps/distance';
-import { WorkingARScanner } from '@/components/scanner/WorkingARScanner';
-import { RealQRScanner } from '@/components/scanner/RealQRScanner';
-import { MockScanner } from '@/components/scanner/MockScanner';
-import { ARMascotView } from '@/components/ar/ARMascotView';
-import { QuestionOverlay } from '@/components/quest/QuestionOverlay';
-import { Location } from '@/types/quest';
+import { calculateDistance, isWithinRadius } from '@/lib/gps/distance';
+import { ARButton } from '@/components/scanner/ARButton';
+import { ARScene } from '@/components/scanner/ARScene';
+import { SpeechBubble } from '@/components/scanner/SpeechBubble';
+import { OverlayModal } from '@/components/scanner/OverlayModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ScannerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const questId = searchParams?.get('questId');
-  const useMock = searchParams?.get('mock') === 'true'; // Mock mode for testing
-  const useQR = searchParams?.get('qr') === 'true'; // QR mode (fallback)
-  const useMarker = searchParams?.get('marker') === 'true'; // Marker AR mode
-  const markerCode = searchParams?.get('markerCode') || undefined; // optional override for emitted code
-  const targetSrc = searchParams?.get('target') || undefined; // optional target path (defaults inside component)
   const quest = questId ? getQuestById(questId) : null;
-
+  
   const { location } = useGeolocation();
-  const { getQuestProgress } = useQuestStore();
-
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [showARMascot, setShowARMascot] = useState(false);
-  const [showQuestion, setShowQuestion] = useState(false);
-  const [scannedLocation, setScannedLocation] = useState<Location | null>(null);
-  const [distance, setDistance] = useState<number>(0);
+  const { progress, currentLocation, completeLocation } = useQuestProgress(quest!);
+  
+  // AR State
+  const [isARActive, setIsARActive] = useState(false);
+  const [isMarkerDetected, setIsMarkerDetected] = useState(false);
+  const [isMascotLoaded, setIsMascotLoaded] = useState(false);
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     if (!quest) {
@@ -43,183 +37,172 @@ export default function ScannerPage() {
     }
   }, [quest, router]);
 
-  // Calculate distance when location or scannedLocation changes
-  useEffect(() => {
-    if (location && scannedLocation) {
-      const dist = calculateDistance(location, scannedLocation.coordinates);
-      setDistance(dist);
-    }
-  }, [location, scannedLocation]);
+  // Check if user is within range of current location
+  const isWithinRange = location && currentLocation 
+    ? isWithinRadius(location, currentLocation.coordinates, currentLocation.radius)
+    : false;
 
-  const handleScanSuccess = (scannedCode: string) => {
-    if (!quest || !location) {
-      setValidationError('GPS location not available');
-      return;
-    }
+  const distanceToLocation = location && currentLocation
+    ? calculateDistance(location, currentLocation.coordinates)
+    : null;
 
-    const progress = getQuestProgress(quest.id);
+  // Check if AR is available for current location
+  const hasARRiddle = currentLocation?.arRiddle;
+  const isARButtonActive = progress && currentLocation && hasARRiddle;
 
-    // For postcard AR quest, map all postcard codes to the current expected location
-    let codeToValidate = scannedCode;
-    if (quest.id === 'quest_test_postcard_ar') {
-      // Map any postcard detection to the current expected location's QR code
-      const currentLocation = quest.locations.find(l => l.id === progress?.currentLocationId || 'start');
-      if (currentLocation) {
-        codeToValidate = currentLocation.qrCode;
-      }
-    }
+  const handleStartAR = () => {
+    setIsARActive(true);
+    setIsPaused(false);
+  };
 
-    // Validate the scanned code
-    const validation = validateQRCode(codeToValidate, quest, progress, location);
+  const handleMarkerDetected = () => {
+    setIsMarkerDetected(true);
+  };
 
-    if (validation.isValid && validation.location) {
-      // Valid scan - show AR mascot view
-      setScannedLocation(validation.location);
-      setShowARMascot(true);
-      setValidationError(null);
-    } else {
-      // Invalid scan - show error
-      setValidationError(validation.errorMessage || 'Invalid code');
+  const handleMarkerLost = () => {
+    setIsMarkerDetected(false);
+  };
 
-      // Clear error after 4 seconds
+  const handleMascotLoaded = () => {
+    setIsMascotLoaded(true);
+  };
+
+  const handleRiddleClick = () => {
+    setIsOverlayOpen(true);
+    setIsPaused(true);
+  };
+
+  const handleAnswerSubmit = (answer: string) => {
+    // Check if answer is correct
+    const isCorrect = answer.toLowerCase().trim() === currentLocation?.arRiddle?.answer.toLowerCase();
+    
+    if (isCorrect && currentLocation) {
+      // Complete the location
+      completeLocation(currentLocation.id);
+      
+      // Show success message
       setTimeout(() => {
-        setValidationError(null);
-      }, 4000);
+        alert('🎉 Correct! Location completed! Next clue unlocked.');
+        router.back(); // Go back to quest detail page
+      }, 1000);
     }
   };
 
-  const handleARMascotClick = () => {
-    // User tapped speech bubble - open question overlay
-    setShowARMascot(false);
-    setShowQuestion(true);
+  const handleCloseOverlay = () => {
+    setIsOverlayOpen(false);
+    setIsPaused(false);
   };
 
-  const handleQuestionComplete = () => {
-    setShowQuestion(false);
-    setScannedLocation(null);
-    router.push(`/quest/${quest?.id}`);
-  };
-
-  const handleClose = () => {
-    setShowARMascot(false);
-    setShowQuestion(false);
-    setScannedLocation(null);
-    router.back();
-  };
-
-  // Helper function to get the correct QR code for current quest progress
-  const getCurrentLocationQRCode = () => {
-    if (!quest) return 'POSTCARD-START';
-    
-    const progress = getQuestProgress(quest.id);
-    const currentLocationId = progress?.currentLocationId || 'start';
-    const currentLocation = quest.locations.find(l => l.id === currentLocationId);
-    
-    return currentLocation?.qrCode || 'POSTCARD-START';
+  const handleBack = () => {
+    if (confirm('Are you sure you want to leave? Your AR progress will be lost.')) {
+      router.back();
+    }
   };
 
   if (!quest) {
     return null;
   }
 
-  // Show question overlay
-  if (showQuestion && scannedLocation) {
-    return (
-      <QuestionOverlay
-        quest={quest}
-        location={scannedLocation}
-        onComplete={handleQuestionComplete}
-        onClose={() => {
-          setShowQuestion(false);
-          setShowARMascot(true); // Go back to AR view
-        }}
-      />
-    );
-  }
-
-  // Show AR mascot view
-  if (showARMascot && scannedLocation) {
-    return (
-      <ARMascotView
-        location={scannedLocation}
-        distance={distance}
-        questTheme={quest.theme}
-        onSpeechBubbleClick={handleARMascotClick}
-        onClose={handleClose}
-      />
-    );
-  }
-
-  // Show scanner (marker AR, card recognition, QR, or mock)
   return (
-    <>
-      {useMock ? (
-        // Mock mode - button-based testing
-        <MockScanner
-          onScan={handleScanSuccess}
-          onClose={handleClose}
-        />
-      ) : useQR ? (
-        // QR mode - fallback for QR codes
-        <RealQRScanner
-          onScan={handleScanSuccess}
-          onClose={handleClose}
-        />
-      ) : useMarker ? (
-        // Marker-based AR mode (MindAR + three.js) - Working version
-        <WorkingARScanner
-          onScan={handleScanSuccess}
-          onClose={handleClose}
-          markerCode={markerCode}
-          questTheme={quest?.theme}
-        />
-      ) : (
-        // Default: Working AR with same postcard for all locations
-        <WorkingARScanner
-          onScan={handleScanSuccess}
-          onClose={handleClose}
-          markerCode={getCurrentLocationQRCode()}
-          questTheme={quest?.theme}
-        />
-      )}
-
-      {/* Error overlay */}
-      {validationError && (
-        <div className="fixed bottom-20 left-0 right-0 z-[60] px-4">
-          <div className="max-w-md mx-auto bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg">
-            <p className="text-sm font-medium">{validationError}</p>
-
-            {/* Mode switcher */}
-            <div className="mt-3 flex gap-2 text-xs flex-wrap">
-              <button
-                onClick={() => router.push(`/scanner?questId=${questId}&qr=true`)}
-                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
-              >
-                QR Mode
-              </button>
-              <button
-                onClick={() => router.push(`/scanner?questId=${questId}&mock=true`)}
-                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
-              >
-                Mock Mode
-              </button>
-              <button
-                onClick={() => router.push(`/scanner?questId=${questId}&marker=true`)}
-                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
-              >
-                Enhanced AR
-              </button>
-              <button
-                onClick={() => router.push(`/scanner?questId=${questId}`)}
-                className="px-3 py-1 bg-white/20 rounded hover:bg-white/30"
-              >
-                Default AR
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500">
+      {/* Header */}
+      <header className="bg-white/10 backdrop-blur-sm text-white shadow-lg">
+        <div className="max-w-md mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBack}
+              className="text-white hover:text-gray-200 text-xl"
+            >
+              ←
+            </button>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold">{quest.title}</h1>
+              <p className="text-sm text-white/90">
+                {currentLocation?.name || 'Loading...'}
+              </p>
             </div>
+            <span className="text-3xl">{quest.theme.icon}</span>
           </div>
         </div>
-      )}
-    </>
+      </header>
+
+      <main className="max-w-md mx-auto px-4 py-6">
+        {/* GPS Status */}
+        <div className="mb-6 p-4 bg-white/10 backdrop-blur-sm rounded-lg text-white">
+          <div className={`flex items-center gap-2 mb-2 ${isWithinRange ? 'text-green-300' : 'text-yellow-300'}`}>
+            <span className="text-xl">{isWithinRange ? '✅' : '⚠️'}</span>
+            <span className="text-sm font-medium">
+              {isWithinRange 
+                ? 'At Location - Ready for AR!' 
+                : `${Math.round(distanceToLocation || 0)}m away`
+              }
+            </span>
+          </div>
+          {!isWithinRange && distanceToLocation && (
+            <p className="text-xs text-white/80">
+              Move within {currentLocation?.radius}m to start AR
+            </p>
+          )}
+        </div>
+
+        {/* AR Button */}
+        {!isARActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <ARButton
+              isActive={!!isARButtonActive}
+              isWithinRange={isWithinRange}
+              distance={distanceToLocation || undefined}
+              radius={currentLocation?.radius}
+              onStartAR={handleStartAR}
+              questTheme={quest.theme}
+            />
+          </motion.div>
+        )}
+
+        {/* AR Scene */}
+        <AnimatePresence>
+          {isARActive && currentLocation?.arRiddle && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative"
+            >
+              <ARScene
+                markerFile={currentLocation.arRiddle.markerFile}
+                mascotModel={currentLocation.arRiddle.mascotModel}
+                onMarkerDetected={handleMarkerDetected}
+                onMarkerLost={handleMarkerLost}
+                onMascotLoaded={handleMascotLoaded}
+                isPaused={isPaused}
+              />
+
+              {/* Speech Bubble */}
+              {isMarkerDetected && isMascotLoaded && (
+                <SpeechBubble
+                  riddle={currentLocation.arRiddle}
+                  onRiddleClick={handleRiddleClick}
+                  delay={2000}
+                  isVisible={!isOverlayOpen}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Overlay Modal */}
+        <OverlayModal
+          isOpen={isOverlayOpen}
+          onClose={handleCloseOverlay}
+          riddle={currentLocation?.arRiddle!}
+          onAnswerSubmit={handleAnswerSubmit}
+          questTheme={quest.theme}
+        />
+      </main>
+    </div>
   );
 }
-
