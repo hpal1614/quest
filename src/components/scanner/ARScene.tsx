@@ -194,12 +194,22 @@ export function ARScene({
       const gltf = await gltfLoader.loadAsync(mascotModel);
       const model = gltf.scene.clone();
       
-      // Make Oliver MUCH bigger and position prominently
-      model.scale.setScalar(0.5); // Increased from 0.08 to 0.5 (6x larger!)
-      model.position.set(0, -0.5, 0); // Slightly lower to fit in frame
-      model.rotation.y = 0; // Face forward
+      // Use AR marker-friendly scale and position (like Burj Khalifa in vision-ar)
+      // Burj Khalifa was very visible, so using similar scale
+      model.scale.set(1, 1, 1); // Standard 1:1 scale (much larger than 0.5!)
+      model.position.set(0, 0, 0); // Center on marker
+      model.rotation.set(0, 0, 0); // No rotation
       
-      console.log('Oliver scale:', model.scale, 'position:', model.position);
+      console.log('🎯 Oliver loaded - scale:', model.scale, 'position:', model.position);
+      
+      // Ensure model is visible
+      model.visible = true;
+      model.traverse((child: any) => {
+        if (child.isMesh) {
+          child.visible = true;
+          child.frustumCulled = false; // Prevent culling
+        }
+      });
       
       // Play animation if available
       let mixer: any = null;
@@ -210,8 +220,22 @@ export function ARScene({
         console.log('Model animation started');
       }
       
+      // Add a bright debug cube to see if ANYTHING renders
+      const debugGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      const debugMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Bright red
+      const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
+      debugCube.position.set(0, 0.5, 0); // Above the model
+      anchor.group.add(debugCube);
+      console.log('🔴 Added red debug cube above Oliver');
+      
       anchor.group.add(model);
-      console.log('Model loaded and added to scene');
+      console.log('✅ Oliver added to anchor! Children in anchor:', anchor.group.children.length);
+      console.log('📦 Model details:', {
+        visible: model.visible,
+        scale: model.scale,
+        position: model.position,
+        hasGeometry: model.children.length > 0
+      });
       
       // Notify parent that model is loaded
       onMascotLoaded();
