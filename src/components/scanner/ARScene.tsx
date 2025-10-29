@@ -400,6 +400,7 @@ export function ARScene({
       {/* AR Container - Fullscreen with exact viewport dimensions */}
       <div 
         ref={containerRef} 
+        id="ar-container"
         className="absolute inset-0"
         style={{ 
           position: 'absolute', 
@@ -407,13 +408,15 @@ export function ARScene({
           left: 0, 
           width: '100vw', 
           height: '100vh',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          zIndex: 0,
+          backgroundColor: 'transparent'
         }}
       />
       
       {/* Status Overlay */}
       {status !== 'ready' && (
-        <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center" style={{ zIndex: 10 }}>
           <div className="text-center text-white">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
             <p className="text-lg font-medium">{getStatusMessage()}</p>
@@ -430,6 +433,7 @@ export function ARScene({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-4 left-4 right-4 bg-white bg-opacity-90 rounded-lg p-4 shadow-lg"
+          style={{ zIndex: 20 }}
         >
           <p className="text-center text-gray-800 font-medium">
             📷 Scan the sticker to reveal your clue!
@@ -443,6 +447,7 @@ export function ARScene({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="absolute top-4 left-4 right-4 bg-green-500 bg-opacity-90 rounded-lg p-4 shadow-lg"
+          style={{ zIndex: 20 }}
         >
           <p className="text-center text-white font-medium">
             ✅ Marker detected! Look for Oliver!
