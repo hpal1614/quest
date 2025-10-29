@@ -90,8 +90,8 @@ export function ARScene({
           console.log('Import map added');
         }
         
-        // Small delay to let importmap register
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Minimal delay to let importmap register
+        await new Promise(resolve => setTimeout(resolve, 50));
         
         script.textContent = `
           import { MindARThree } from 'mindar-image-three';
@@ -109,33 +109,27 @@ export function ARScene({
         console.log('Module script added, waiting for libraries...');
       }
       
-      // Wait for libraries with better timeout and logging
+      // Wait for libraries with faster polling
       await new Promise<void>((resolve, reject) => {
         let attempts = 0;
-        const maxAttempts = 100; // 10 seconds
+        const maxAttempts = 200; // 10 seconds (checking every 50ms)
         
         const checkLibraries = () => {
           attempts++;
           const loaded = (window as any).arLibsLoaded;
-          const hasWindow = typeof window !== 'undefined';
           
-          if (attempts % 10 === 0) {
-            console.log(`Checking libraries... attempt ${attempts}/${maxAttempts}`, {
-              hasWindow,
-              loaded,
-              MindARThree: !!(window as any).MindARThree,
-              THREE: !!(window as any).THREE,
-              GLTFLoader: !!(window as any).GLTFLoader
-            });
+          // Only log every 20 attempts (once per second) to reduce console spam
+          if (attempts % 20 === 0) {
+            console.log(`⏳ Loading AR... ${Math.floor(attempts * 50 / 1000)}s`);
           }
           
           if (loaded) {
-            console.log('✅ Libraries confirmed ready!');
+            console.log('✅ Libraries ready in', (attempts * 50 / 1000).toFixed(1), 'seconds');
             resolve();
           } else if (attempts >= maxAttempts) {
-            reject(new Error('AR libraries loading timeout - libraries never loaded'));
+            reject(new Error('AR libraries loading timeout'));
           } else {
-            setTimeout(checkLibraries, 100);
+            setTimeout(checkLibraries, 50); // Check every 50ms instead of 100ms
           }
         };
         
@@ -179,12 +173,19 @@ export function ARScene({
       const { renderer, scene, camera } = mindarThree;
       const anchor = mindarThree.addAnchor(0);
 
-      // Add lighting (matching the working example)
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-      scene.add(hemiLight);
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      dirLight.position.set(0.5, 1, 0.5);
-      scene.add(dirLight);
+      // Add bright lighting to make Oliver clearly visible
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Bright ambient light
+      scene.add(ambientLight);
+      
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.0); // Brighter directional light
+      dirLight1.position.set(1, 1, 1);
+      scene.add(dirLight1);
+      
+      const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5); // Additional light from other side
+      dirLight2.position.set(-1, 1, -1);
+      scene.add(dirLight2);
+      
+      console.log('Lighting added:', { ambient: ambientLight.intensity, dirLight1: dirLight1.intensity, dirLight2: dirLight2.intensity });
 
       // Load 3D model
       const gltfLoader = new GLTFLoader();
@@ -192,8 +193,13 @@ export function ARScene({
       
       const gltf = await gltfLoader.loadAsync(mascotModel);
       const model = gltf.scene.clone();
-      model.scale.setScalar(0.08);
-      model.position.set(0, 0, 0);
+      
+      // Make Oliver MUCH bigger and position prominently
+      model.scale.setScalar(0.5); // Increased from 0.08 to 0.5 (6x larger!)
+      model.position.set(0, -0.5, 0); // Slightly lower to fit in frame
+      model.rotation.y = 0; // Face forward
+      
+      console.log('Oliver scale:', model.scale, 'position:', model.position);
       
       // Play animation if available
       let mixer: any = null;
@@ -275,12 +281,19 @@ export function ARScene({
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-black">
-      {/* AR Container - Fullscreen */}
+    <div className="fixed inset-0 bg-black" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      {/* AR Container - Fullscreen with exact viewport dimensions */}
       <div 
         ref={containerRef} 
-        className="absolute inset-0 w-full h-full"
-        style={{ position: 'absolute', width: '100%', height: '100%' }}
+        className="absolute inset-0"
+        style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          width: '100vw', 
+          height: '100vh',
+          overflow: 'hidden'
+        }}
       />
       
       {/* Status Overlay */}
