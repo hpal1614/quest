@@ -275,12 +275,12 @@ export function ARScene({
   };
 
   return (
-    <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-      {/* AR Container */}
+    <div className="fixed inset-0 w-full h-full bg-black">
+      {/* AR Container - Fullscreen */}
       <div 
         ref={containerRef} 
-        className="w-full h-full"
-        style={{ minHeight: '400px' }}
+        className="absolute inset-0 w-full h-full"
+        style={{ position: 'absolute', width: '100%', height: '100%' }}
       />
       
       {/* Status Overlay */}

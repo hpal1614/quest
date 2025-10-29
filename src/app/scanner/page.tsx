@@ -23,8 +23,8 @@ export default function ScannerPage() {
   const { location } = useGeolocation();
   const { progress, currentLocation, updateProgress } = useQuestProgress(quest!);
   
-  // AR State
-  const [isARActive, setIsARActive] = useState(false);
+  // AR State - Auto-start AR immediately
+  const [isARActive, setIsARActive] = useState(true); // Changed to true
   const [isMarkerDetected, setIsMarkerDetected] = useState(false);
   const [isMascotLoaded, setIsMascotLoaded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
@@ -35,6 +35,8 @@ export default function ScannerPage() {
       router.push('/');
       return;
     }
+    // Auto-start AR when page loads
+    setIsARActive(true);
   }, [quest, router]);
 
   // Check if user is within range of current location
@@ -109,74 +111,26 @@ export default function ScannerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500">
-      {/* Header */}
-      <header className="bg-white/10 backdrop-blur-sm text-white shadow-lg">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleBack}
-              className="text-white hover:text-gray-200 text-xl"
-            >
-              ←
-            </button>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold">{quest.title}</h1>
-              <p className="text-sm text-white/90">
-                {currentLocation?.name || 'Loading...'}
-              </p>
-            </div>
-            <span className="text-3xl">{quest.theme.icon}</span>
-          </div>
-        </div>
-      </header>
+    <div className="fixed inset-0 w-full h-full overflow-hidden bg-black">
+      {/* Floating Back Button */}
+      <button
+        onClick={handleBack}
+        className="fixed top-4 left-4 z-50 bg-black/50 text-white p-3 rounded-full backdrop-blur-sm hover:bg-black/70 transition-all"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
 
-      <main className="max-w-md mx-auto px-4 py-6">
-        {/* GPS Status */}
-        <div className="mb-6 p-4 bg-white/10 backdrop-blur-sm rounded-lg text-white">
-          <div className={`flex items-center gap-2 mb-2 ${isWithinRange ? 'text-green-300' : 'text-yellow-300'}`}>
-            <span className="text-xl">{isWithinRange ? '✅' : '⚠️'}</span>
-            <span className="text-sm font-medium">
-              {isWithinRange 
-                ? 'At Location - Ready for AR!' 
-                : `${Math.round(distanceToLocation || 0)}m away`
-              }
-            </span>
-          </div>
-          {!isWithinRange && distanceToLocation && (
-            <p className="text-xs text-white/80">
-              Move within {currentLocation?.radius}m to start AR
-            </p>
-          )}
-        </div>
-
-        {/* AR Button */}
-        {!isARActive && (
+      {/* AR Scene - Fullscreen */}
+      <AnimatePresence>
+        {isARActive && currentLocation && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full h-full"
           >
-            <ARButton
-              isActive={!!isARButtonActive}
-              isWithinRange={isWithinRange}
-              distance={distanceToLocation || undefined}
-              radius={currentLocation?.radius}
-              onStartAR={handleStartAR}
-              questTheme={quest.theme}
-            />
-          </motion.div>
-        )}
-
-        {/* AR Scene */}
-        <AnimatePresence>
-          {isARActive && currentLocation && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="relative"
-            >
               <ARScene
                 markerFile={currentLocation.arRiddle?.markerFile || '/assets/mind-file/postcard.mind'}
                 mascotModel={currentLocation.arRiddle?.mascotModel || '/assets/Oliver/biped/Character_output.glb'}
@@ -195,21 +149,20 @@ export default function ScannerPage() {
                   isVisible={!isOverlayOpen}
                 />
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Overlay Modal */}
-        {currentLocation?.arRiddle && (
-          <OverlayModal
-            isOpen={isOverlayOpen}
-            onClose={handleCloseOverlay}
-            riddle={currentLocation.arRiddle}
-            onAnswerSubmit={handleAnswerSubmit}
-            questTheme={quest.theme}
-          />
+          </motion.div>
         )}
-      </main>
+      </AnimatePresence>
+
+      {/* Overlay Modal */}
+      {currentLocation?.arRiddle && (
+        <OverlayModal
+          isOpen={isOverlayOpen}
+          onClose={handleCloseOverlay}
+          riddle={currentLocation.arRiddle}
+          onAnswerSubmit={handleAnswerSubmit}
+          questTheme={quest.theme}
+        />
+      )}
     </div>
   );
 }
