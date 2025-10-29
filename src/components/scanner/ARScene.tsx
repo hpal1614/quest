@@ -194,8 +194,8 @@ export function ARScene({
       const gltf = await gltfLoader.loadAsync(mascotModel);
       const model = gltf.scene.clone();
       
-      // Scale Oliver to reasonable AR size - smaller than the massive debug cube
-      model.scale.set(0.3, 0.3, 0.3); // Good visible size for AR
+      // Use the scale that worked when you could see it
+      model.scale.set(1.0, 1.0, 1.0); // This scale showed Oliver before
       model.position.set(0, 0, 0); // Center on marker
       model.rotation.set(0, 0, 0); // No rotation
       
