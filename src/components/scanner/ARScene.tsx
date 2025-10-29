@@ -335,6 +335,27 @@ export function ARScene({
       console.log('✅ MindAR started successfully');
       console.log('📹 Camera active, renderer running, waiting for marker...');
       
+      // DEBUG: Check if renderer canvas is visible
+      console.log('🎥 RENDERER CANVAS DEBUG:', {
+        canvas: renderer.domElement,
+        canvasParent: renderer.domElement.parentElement,
+        canvasDisplay: renderer.domElement.style.display,
+        canvasWidth: renderer.domElement.width,
+        canvasHeight: renderer.domElement.height,
+        canvasStyle: renderer.domElement.style.cssText,
+        containerHasCanvas: containerRef.current?.contains(renderer.domElement)
+      });
+      
+      // Force canvas to be visible
+      renderer.domElement.style.display = 'block';
+      renderer.domElement.style.position = 'absolute';
+      renderer.domElement.style.top = '0';
+      renderer.domElement.style.left = '0';
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
+      renderer.domElement.style.zIndex = '1';
+      console.log('🔧 Forced canvas styles applied');
+      
       setStatus('ready');
       console.log('AR Scene ready!');
 
