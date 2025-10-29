@@ -60,48 +60,97 @@ export function ARScene({
       // Stop the test stream - MindAR will create its own
       stream.getTracks().forEach(track => track.stop());
 
-      // Step 2: Load MindAR and Three.js using dynamic script loading
+      // Step 2: Load MindAR and Three.js as ES modules (browser-only, runtime loading)
       setStatus('loading-libraries');
       console.log('Loading AR libraries...');
 
-      // Create inline ES module script (like working example but runtime-compatible)
-      await new Promise<void>((resolve, reject) => {
+      // CRITICAL FIX: Load scripts one by one and wait for each to be ready
+      // This ensures proper initialization order
+      
+      // Check if already loaded (prevent duplicate loading)
+      if (!(window as any).arLibsLoaded) {
         const script = document.createElement('script');
         script.type = 'module';
+        script.id = 'mindar-loader';
+        
+        // Use importmap approach (closer to your working example)
+        const importMapScript = document.createElement('script');
+        importMapScript.type = 'importmap';
+        importMapScript.textContent = JSON.stringify({
+          imports: {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/",
+            "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+          }
+        });
+        
+        // Only add importmap if not already present
+        if (!document.querySelector('script[type="importmap"]')) {
+          document.head.appendChild(importMapScript);
+          console.log('Import map added');
+        }
+        
+        // Small delay to let importmap register
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         script.textContent = `
-          import { MindARThree } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js';
-          import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js';
-          import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/loaders/GLTFLoader.js';
+          import { MindARThree } from 'mindar-image-three';
+          import * as THREE from 'three';
+          import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
           
           window.MindARThree = MindARThree;
           window.THREE = THREE;
           window.GLTFLoader = GLTFLoader;
           window.arLibsLoaded = true;
-          console.log('AR libraries loaded and exposed to window');
+          console.log('✅ MindAR libraries loaded:', { MindARThree: !!MindARThree, THREE: !!THREE, GLTFLoader: !!GLTFLoader });
         `;
-        script.onerror = () => reject(new Error('Failed to load AR libraries'));
+        
         document.head.appendChild(script);
+        console.log('Module script added, waiting for libraries...');
+      }
+      
+      // Wait for libraries with better timeout and logging
+      await new Promise<void>((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 100; // 10 seconds
         
-        // Wait for libraries to be available
-        const checkInterval = setInterval(() => {
-          if ((window as any).arLibsLoaded) {
-            clearInterval(checkInterval);
-            resolve();
+        const checkLibraries = () => {
+          attempts++;
+          const loaded = (window as any).arLibsLoaded;
+          const hasWindow = typeof window !== 'undefined';
+          
+          if (attempts % 10 === 0) {
+            console.log(`Checking libraries... attempt ${attempts}/${maxAttempts}`, {
+              hasWindow,
+              loaded,
+              MindARThree: !!(window as any).MindARThree,
+              THREE: !!(window as any).THREE,
+              GLTFLoader: !!(window as any).GLTFLoader
+            });
           }
-        }, 100);
+          
+          if (loaded) {
+            console.log('✅ Libraries confirmed ready!');
+            resolve();
+          } else if (attempts >= maxAttempts) {
+            reject(new Error('AR libraries loading timeout - libraries never loaded'));
+          } else {
+            setTimeout(checkLibraries, 100);
+          }
+        };
         
-        // Timeout after 10 seconds
-        setTimeout(() => {
-          clearInterval(checkInterval);
-          reject(new Error('AR libraries loading timeout'));
-        }, 10000);
+        checkLibraries();
       });
       
       console.log('All AR libraries loaded successfully!');
       
-      const { MindARThree } = (window as any);
+      const MindARThree = (window as any).MindARThree;
       const THREE = (window as any).THREE;
-      const { GLTFLoader } = (window as any);
+      const GLTFLoader = (window as any).GLTFLoader;
+      
+      if (!MindARThree || !THREE || !GLTFLoader) {
+        throw new Error('Libraries loaded but not accessible on window');
+      }
 
       // Step 3: Initialize MindAR (exactly like the working example)
       setStatus('initializing');
