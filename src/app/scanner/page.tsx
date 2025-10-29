@@ -21,7 +21,7 @@ export default function ScannerPage() {
   const quest = questId ? getQuestById(questId) : null;
   
   const { location } = useGeolocation();
-  const { progress, currentLocation, completeLocation } = useQuestProgress(quest!);
+  const { progress, currentLocation, updateProgress } = useQuestProgress(quest!);
   
   // AR State
   const [isARActive, setIsARActive] = useState(false);
@@ -76,9 +76,14 @@ export default function ScannerPage() {
     // Check if answer is correct
     const isCorrect = answer.toLowerCase().trim() === currentLocation?.arRiddle?.answer.toLowerCase();
     
-    if (isCorrect && currentLocation) {
-      // Complete the location
-      completeLocation(currentLocation.id);
+    if (isCorrect && currentLocation && quest) {
+      // Move to next location
+      const currentIndex = quest.locations.findIndex(loc => loc.id === currentLocation.id);
+      const nextLocation = quest.locations[currentIndex + 1];
+      
+      if (nextLocation) {
+        updateProgress(quest.id, nextLocation.id);
+      }
       
       // Show success message
       setTimeout(() => {
