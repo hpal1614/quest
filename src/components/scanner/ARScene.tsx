@@ -115,9 +115,21 @@ export function ARScene({
       await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js');
       console.log('GLTFLoader loaded');
 
-      // Load MindAR - try the UMD version that creates globals
-      await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.umd.js');
-      console.log('MindAR UMD loaded');
+      // Load MindAR - try multiple CDN sources
+      try {
+        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.umd.js');
+        console.log('MindAR UMD loaded from jsdelivr');
+      } catch (error) {
+        console.log('jsdelivr failed, trying unpkg...');
+        try {
+          await loadScript('https://unpkg.com/mind-ar@1.2.5/dist/mindar-image-three.umd.js');
+          console.log('MindAR UMD loaded from unpkg');
+        } catch (error2) {
+          console.log('unpkg failed, trying cdnjs...');
+          await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mind-ar/1.2.5/mindar-image-three.umd.js');
+          console.log('MindAR UMD loaded from cdnjs');
+        }
+      }
 
       // Step 3: Wait for libraries to be ready
       await waitForLibraries();
