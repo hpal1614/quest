@@ -220,36 +220,42 @@ export function ARScene({
         console.log('Model animation started');
       }
       
-      // Create a THREE.Group to hold everything
-      const content = new THREE.Group();
-      
-      // CRITICAL FIX: Position the group FORWARD (positive Z) so it's in front of camera
-      content.position.set(0, 0, 0.5); // Move 0.5 units forward from marker
-      
-      // Add a HUGE bright red cube that's IMPOSSIBLE to miss
-      const debugGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+      // MASSIVE DEBUG CUBE - If this doesn't show, rendering is broken
+      const HUGE_SIZE = 2.0; // 2 meters cube!
+      const debugGeometry = new THREE.BoxGeometry(HUGE_SIZE, HUGE_SIZE, HUGE_SIZE);
       const debugMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xff0000,
+        wireframe: false,
         side: THREE.DoubleSide,
-        depthTest: false // Always render on top
+        transparent: false,
+        opacity: 1.0,
+        depthTest: false,
+        depthWrite: false
       });
       const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
-      debugCube.position.set(0, 0, 0); // Center of marker
-      content.add(debugCube);
-      console.log('🔴 Red debug cube created at center (0, 0, 0)');
+      debugCube.position.set(0, 0, 0); // Dead center
       
-      // Add Oliver model slightly below cube
-      model.position.set(0, -0.3, 0); // Below the cube
-      content.add(model);
-      console.log('✅ Oliver added to content group below cube');
+      // Add cube DIRECTLY to anchor (skip grouping for now)
+      anchor.group.add(debugCube);
+      console.log('🔴 MASSIVE 2m RED CUBE added directly to anchor at (0,0,0)');
+      console.log('🔴 Cube properties:', {
+        position: debugCube.position,
+        scale: debugCube.scale,
+        visible: debugCube.visible,
+        renderOrder: debugCube.renderOrder
+      });
       
-      // Add the entire group to anchor
-      anchor.group.add(content);
-      console.log('📦 Content group added to anchor at position:', content.position);
-      console.log('🎯 Total objects in scene:', {
-        sceneChildren: scene.children.length,
-        anchorChildren: anchor.group.children.length,
-        contentChildren: content.children.length
+      // Add Oliver model
+      model.position.set(0, -1, 0); // Below the massive cube
+      anchor.group.add(model);
+      console.log('✅ Oliver added to anchor at (0,-1,0)');
+      
+      console.log('📦 Total in anchor:', anchor.group.children.length);
+      console.log('🎯 Anchor group properties:', {
+        position: anchor.group.position,
+        scale: anchor.group.scale,
+        visible: anchor.group.visible,
+        children: anchor.group.children.length
       });
       
       // Notify parent that model is loaded
@@ -260,6 +266,22 @@ export function ARScene({
         console.log('🎯 MARKER DETECTED! Anchor should be visible now');
         console.log('📦 Anchor children count:', anchor.group.children.length);
         console.log('👁️ Anchor visible:', anchor.group.visible);
+        console.log('🎥 Renderer info:', {
+          rendering: true,
+          canvas: !!renderer.domElement,
+          canvasVisible: renderer.domElement.style.display !== 'none',
+          canvasSize: { w: renderer.domElement.width, h: renderer.domElement.height }
+        });
+        console.log('📹 Camera info:', {
+          position: camera.position,
+          rotation: camera.rotation,
+          fov: camera.fov || 'N/A'
+        });
+        
+        // Force a manual render to test
+        renderer.render(scene, camera);
+        console.log('🎬 Manual render triggered');
+        
         setIsMarkerVisible(true);
         onMarkerDetected();
       };
