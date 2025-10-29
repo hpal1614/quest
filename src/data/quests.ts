@@ -168,7 +168,7 @@ export const QUESTS: Quest[] = [
         id: 'start',
         name: 'Paddy\'s Markets',
         type: 'start',
-        coordinates: { lat: -33.8795, lng: 151.2025 },
+        coordinates: { lat: -33.88150244922693, lng: 151.20428242435628 },
         radius: 50,
         clue: 'Start your sensory journey at Sydney\'s most iconic market, bustling with sights, sounds, and flavors...',
         question: null
