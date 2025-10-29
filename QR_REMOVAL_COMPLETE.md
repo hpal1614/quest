@@ -59,3 +59,4 @@ qrCode?: string; // Optional QR code
 **✅ No TypeScript errors**
 **✅ Quest system fully functional**
 
+

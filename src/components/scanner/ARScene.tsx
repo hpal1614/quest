@@ -25,6 +25,7 @@ export function ARScene({
   const oliverGroupRef = useRef<any>(null);
   const mixerRef = useRef<any>(null);
   const gltfRef = useRef<any>(null);
+  const isPausedRef = useRef(isPaused);
   const [status, setStatus] = useState<'loading' | 'requesting-camera' | 'loading-libraries' | 'initializing' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [isMarkerVisible, setIsMarkerVisible] = useState(false);
@@ -38,12 +39,14 @@ export function ARScene({
   }, []);
 
   useEffect(() => {
+    isPausedRef.current = isPaused;
+
     if (isPaused && mindarThreeRef.current) {
       mindarThreeRef.current.stop();
     } else if (!isPaused && mindarThreeRef.current && status === 'ready') {
       mindarThreeRef.current.start();
     }
-  }, [isPaused]);
+  }, [isPaused, status]);
 
   const initializeAR = async () => {
     try {
@@ -174,6 +177,7 @@ export function ARScene({
       console.log('MindAR instance created successfully');
 
       const { renderer, scene, camera } = mindarThree;
+      const clock = new THREE.Clock();
       const anchor = mindarThree.addAnchor(0);
 
       // Add bright lighting to make Oliver clearly visible
@@ -261,15 +265,15 @@ export function ARScene({
       }
       
       // Add GIANT RED SPHERE for absolute visibility test
-      const sphereGeo = new THREE.SphereGeometry(0.5, 32, 32); // Half-meter sphere
+      const sphereGeo = new THREE.SphereGeometry(0.05, 32, 32); // Small 5cm sphere for debug
       const sphereMat = new THREE.MeshBasicMaterial({ 
         color: 0xff0000,
         wireframe: false
       });
       const redSphere = new THREE.Mesh(sphereGeo, sphereMat);
-      redSphere.position.set(0, 0.5, 0); // Half meter above marker
+      redSphere.position.set(0, 0.15, 0); // Slightly above marker so Oliver stays visible
       anchor.group.add(redSphere);
-      console.log('🔴 GIANT RED SPHERE added at (0, 0.5, 0)');
+      console.log('🔴 Debug red sphere added at (0, 0.15, 0)');
       
       // Wrap Oliver in a Group (EXACT approach from vision-ar line 83)
       const oliverGroup = new THREE.Group();
@@ -355,15 +359,15 @@ export function ARScene({
         onMarkerLost();
       };
 
-      // Animation loop for model animations (using refs)
-      const clock = new THREE.Clock();
-      const animate = () => {
-        if (mixerRef.current && !isPaused) {
+      renderer.setAnimationLoop(() => {
+        if (mixerRef.current && !isPausedRef.current) {
           mixerRef.current.update(clock.getDelta());
+        } else {
+          clock.getDelta();
         }
-        requestAnimationFrame(animate);
-      };
-      animate();
+
+        renderer.render(scene, camera);
+      });
 
       // Start AR
       console.log('Starting MindAR...');
@@ -410,6 +414,8 @@ export function ARScene({
 
   const cleanup = () => {
     if (mindarThreeRef.current) {
+      const { renderer } = mindarThreeRef.current;
+      renderer.setAnimationLoop(null);
       mindarThreeRef.current.stop();
       mindarThreeRef.current = null;
     }

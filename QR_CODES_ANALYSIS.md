@@ -128,3 +128,4 @@ The remaining QR codes follow the **QSQ** (Quest Sydney Quest) format:
 
 **The QR codes are well-structured and ready for use, but the scanning functionality has been completely removed from the application.**
 
+
