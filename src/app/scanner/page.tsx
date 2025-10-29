@@ -48,7 +48,7 @@ export default function ScannerPage() {
 
   // Check if AR is available for current location
   const hasARRiddle = currentLocation?.arRiddle;
-  const isARButtonActive = progress && currentLocation && hasARRiddle;
+  const isARButtonActive = progress && currentLocation;
 
   const handleStartAR = () => {
     setIsARActive(true);
@@ -170,7 +170,7 @@ export default function ScannerPage() {
 
         {/* AR Scene */}
         <AnimatePresence>
-          {isARActive && currentLocation?.arRiddle && (
+          {isARActive && currentLocation && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -178,8 +178,8 @@ export default function ScannerPage() {
               className="relative"
             >
               <ARScene
-                markerFile={currentLocation.arRiddle.markerFile}
-                mascotModel={currentLocation.arRiddle.mascotModel}
+                markerFile={currentLocation.arRiddle?.markerFile || '/assets/mind-file/postcard.mind'}
+                mascotModel={currentLocation.arRiddle?.mascotModel || '/assets/Oliver/biped/Character_output.glb'}
                 onMarkerDetected={handleMarkerDetected}
                 onMarkerLost={handleMarkerLost}
                 onMascotLoaded={handleMascotLoaded}
@@ -187,7 +187,7 @@ export default function ScannerPage() {
               />
 
               {/* Speech Bubble */}
-              {isMarkerDetected && isMascotLoaded && (
+              {isMarkerDetected && isMascotLoaded && currentLocation.arRiddle && (
                 <SpeechBubble
                   riddle={currentLocation.arRiddle}
                   onRiddleClick={handleRiddleClick}
@@ -200,13 +200,15 @@ export default function ScannerPage() {
         </AnimatePresence>
 
         {/* Overlay Modal */}
-        <OverlayModal
-          isOpen={isOverlayOpen}
-          onClose={handleCloseOverlay}
-          riddle={currentLocation?.arRiddle!}
-          onAnswerSubmit={handleAnswerSubmit}
-          questTheme={quest.theme}
-        />
+        {currentLocation?.arRiddle && (
+          <OverlayModal
+            isOpen={isOverlayOpen}
+            onClose={handleCloseOverlay}
+            riddle={currentLocation.arRiddle}
+            onAnswerSubmit={handleAnswerSubmit}
+            questTheme={quest.theme}
+          />
+        )}
       </main>
     </div>
   );
