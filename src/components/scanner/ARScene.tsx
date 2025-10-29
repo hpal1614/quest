@@ -220,35 +220,44 @@ export function ARScene({
         console.log('Model animation started');
       }
       
-      // Add a bright debug cube to see if ANYTHING renders
-      const debugGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-      const debugMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Bright red
-      const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
-      debugCube.position.set(0, 0.5, 0); // Above the model
-      anchor.group.add(debugCube);
-      console.log('🔴 Added red debug cube above Oliver');
+      // Create a THREE.Group to hold everything
+      const content = new THREE.Group();
       
-      anchor.group.add(model);
-      console.log('✅ Oliver added to anchor! Children in anchor:', anchor.group.children.length);
-      console.log('📦 Model details:', {
-        visible: model.visible,
-        scale: model.scale,
-        position: model.position,
-        hasGeometry: model.children.length > 0
+      // Add a HUGE bright red cube that's IMPOSSIBLE to miss
+      const debugGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+      const debugMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xff0000,
+        side: THREE.DoubleSide
       });
+      const debugCube = new THREE.Mesh(debugGeometry, debugMaterial);
+      debugCube.position.set(0, 0.2, 0); // Floating above
+      content.add(debugCube);
+      console.log('🔴 Red debug cube created at (0, 0.2, 0)');
+      
+      // Add Oliver model
+      content.add(model);
+      console.log('✅ Oliver added to content group');
+      
+      // Add the entire group to anchor
+      anchor.group.add(content);
+      console.log('📦 Content group added to anchor. Total children:', anchor.group.children.length);
+      console.log('🎯 Anchor position:', anchor.group.position);
+      console.log('👁️ Model visible:', model.visible, 'Children:', model.children.length);
       
       // Notify parent that model is loaded
       onMascotLoaded();
 
       // Set up marker detection events
       anchor.onTargetFound = () => {
-        console.log('Marker detected!');
+        console.log('🎯 MARKER DETECTED! Anchor should be visible now');
+        console.log('📦 Anchor children count:', anchor.group.children.length);
+        console.log('👁️ Anchor visible:', anchor.group.visible);
         setIsMarkerVisible(true);
         onMarkerDetected();
       };
 
       anchor.onTargetLost = () => {
-        console.log('Marker lost');
+        console.log('❌ Marker lost');
         setIsMarkerVisible(false);
         onMarkerLost();
       };
@@ -265,8 +274,15 @@ export function ARScene({
 
       // Start AR
       console.log('Starting MindAR...');
+      console.log('🎬 Scene info before start:', {
+        sceneChildren: scene.children.length,
+        anchorChildren: anchor.group.children.length,
+        rendererSize: { width: renderer.domElement.width, height: renderer.domElement.height }
+      });
+      
       await mindarThree.start();
-      console.log('MindAR started successfully');
+      console.log('✅ MindAR started successfully');
+      console.log('📹 Camera active, renderer running, waiting for marker...');
       
       setStatus('ready');
       console.log('AR Scene ready!');
