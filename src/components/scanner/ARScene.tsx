@@ -115,21 +115,30 @@ export function ARScene({
       await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js');
       console.log('GLTFLoader loaded');
 
-      // Load MindAR - try multiple CDN sources
-      try {
-        await loadScript('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.umd.js');
-        console.log('MindAR UMD loaded from jsdelivr');
-      } catch (error) {
-        console.log('jsdelivr failed, trying unpkg...');
-        try {
-          await loadScript('https://unpkg.com/mind-ar@1.2.5/dist/mindar-image-three.umd.js');
-          console.log('MindAR UMD loaded from unpkg');
-        } catch (error2) {
-          console.log('unpkg failed, trying cdnjs...');
-          await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mind-ar/1.2.5/mindar-image-three.umd.js');
-          console.log('MindAR UMD loaded from cdnjs');
-        }
-      }
+      // Load MindAR - create inline module script to expose to window
+      console.log('Loading MindAR as ES module...');
+      const mindarScript = document.createElement('script');
+      mindarScript.type = 'module';
+      mindarScript.innerHTML = `
+        import * as MINDAR_MODULE from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js';
+        window.MINDAR = MINDAR_MODULE;
+        window.mindarLoaded = true;
+        console.log('MindAR module loaded and exposed to window.MINDAR');
+      `;
+      document.head.appendChild(mindarScript);
+      
+      // Wait for MindAR to load
+      await new Promise((resolve) => {
+        const checkMindAR = () => {
+          if ((window as any).mindarLoaded) {
+            console.log('MindAR confirmed loaded');
+            resolve(true);
+          } else {
+            setTimeout(checkMindAR, 100);
+          }
+        };
+        checkMindAR();
+      });
 
       // Step 3: Wait for libraries to be ready
       await waitForLibraries();
