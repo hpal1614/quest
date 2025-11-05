@@ -131,18 +131,28 @@ export function OverlayModal({
                       />
                     </div>
                     
-                    {/* Submit Button */}
-                    <button
-                      onClick={handleSubmit}
-                      disabled={!userAnswer.trim()}
-                      className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all ${
-                        userAnswer.trim()
-                          ? `bg-gradient-to-r ${questTheme.gradient} text-white shadow-lg hover:shadow-xl active:scale-95`
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                    >
-                      Submit Answer
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleSubmit}
+                        disabled={!userAnswer.trim()}
+                        className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all ${
+                          userAnswer.trim()
+                            ? `bg-gradient-to-r ${questTheme.gradient} text-white shadow-lg hover:shadow-xl active:scale-95`
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Submit Answer
+                      </button>
+
+                      {/* Back to Scan Button */}
+                      <button
+                        onClick={handleClose}
+                        className="w-full py-3 px-6 rounded-lg font-medium text-gray-700 border-2 border-gray-300 hover:bg-gray-50 active:scale-95 transition-all"
+                      >
+                        ← Back to Scan
+                      </button>
+                    </div>
                   </>
                 ) : (
                   /* Result Display */
