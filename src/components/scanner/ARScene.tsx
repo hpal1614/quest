@@ -446,15 +446,31 @@ export function ARScene({
         containerHasCanvas: containerRef.current?.contains(renderer.domElement)
       });
 
-      // Force canvas to be visible
+      // Force canvas to be visible and fill screen
       renderer.domElement.style.display = 'block';
       renderer.domElement.style.position = 'absolute';
       renderer.domElement.style.top = '0';
       renderer.domElement.style.left = '0';
       renderer.domElement.style.width = '100%';
       renderer.domElement.style.height = '100%';
+      renderer.domElement.style.objectFit = 'cover';
       renderer.domElement.style.zIndex = '1';
       console.log('🔧 Forced canvas styles applied');
+
+      // Force video element to fill screen (MindAR creates a video element for camera)
+      const videoElement = containerRef.current?.querySelector('video');
+      if (videoElement) {
+        (videoElement as HTMLVideoElement).style.position = 'absolute';
+        (videoElement as HTMLVideoElement).style.top = '0';
+        (videoElement as HTMLVideoElement).style.left = '0';
+        (videoElement as HTMLVideoElement).style.width = '100%';
+        (videoElement as HTMLVideoElement).style.height = '100%';
+        (videoElement as HTMLVideoElement).style.objectFit = 'cover';
+        (videoElement as HTMLVideoElement).style.zIndex = '0';
+        console.log('🎥 Forced video styles applied - camera should fill screen');
+      } else {
+        console.warn('⚠️ Video element not found in container');
+      }
 
       // Mark as successfully initialized (module-level flags)
       arSceneInitialized = true;
@@ -517,16 +533,29 @@ export function ARScene({
 
   return (
     <div className="fixed inset-0 bg-black" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      {/* Global styles for AR camera to fill screen */}
+      <style jsx global>{`
+        #ar-container video,
+        #ar-container canvas {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+        }
+      `}</style>
+
       {/* AR Container - Fullscreen with exact viewport dimensions */}
-      <div 
-        ref={containerRef} 
+      <div
+        ref={containerRef}
         id="ar-container"
         className="absolute inset-0"
-        style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          width: '100vw', 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100vw',
           height: '100vh',
           overflow: 'hidden',
           zIndex: 0,
