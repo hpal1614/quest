@@ -30,19 +30,38 @@ export function SpeechBubble({ riddle, onRiddleClick, delay = 3000, isVisible, o
     }
   }, [isVisible, delay]);
 
-  // Calculate bubble position (top-right of Oliver)
+  // Calculate bubble position (above Oliver's head)
   const getBubbleStyle = () => {
     if (!oliverPosition) {
       // Fallback to fixed position if Oliver position is not available
       return { top: '8rem', right: '1.5rem' };
     }
 
-    // Position bubble above Oliver's head
-    // Oliver's position is at his center/feet, so we need to offset upward significantly
-    // Offset: move left and much higher above Oliver
+    // Calculate viewport-relative offsets for better mobile support
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    // Position bubble above Oliver - use 20% of viewport height as offset
+    const verticalOffset = viewportHeight * 0.20; // 20% of screen height above Oliver
+    const horizontalOffset = viewportWidth * 0.15; // Offset to center the bubble better
+
+    // Calculate position
+    let left = oliverPosition.x - horizontalOffset;
+    let top = oliverPosition.y - verticalOffset;
+
+    // Bounds checking - ensure bubble stays on screen
+    const bubbleWidth = 300; // max-w-xs is approximately 300px
+    const bubbleHeight = 150; // approximate height
+
+    // Keep bubble within viewport
+    if (left < 10) left = 10;
+    if (left + bubbleWidth > viewportWidth - 10) left = viewportWidth - bubbleWidth - 10;
+    if (top < 10) top = 10;
+    if (top + bubbleHeight > viewportHeight - 10) top = viewportHeight - bubbleHeight - 10;
+
     return {
-      left: `${oliverPosition.x - 300}px`,
-      top: `${oliverPosition.y - 550}px`,
+      left: `${left}px`,
+      top: `${top}px`,
     };
   };
 
