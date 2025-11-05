@@ -42,11 +42,18 @@ export default function ScannerPage() {
   const [oliverPosition, setOliverPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
+    console.log('🚀 [STEP 1] Scanner Page Initialized');
+    console.log('   → Quest:', quest?.title);
+    console.log('   → Current Location:', currentLocation?.name);
+    console.log('   → Has AR Riddle:', !!currentLocation?.arRiddle);
+
     if (!quest) {
+      console.log('❌ [ERROR] No quest found, redirecting to home');
       router.push('/');
       return;
     }
     // Auto-start AR when page loads
+    console.log('✅ [STEP 1] Auto-starting AR...');
     setIsARActive(true);
   }, [quest, router]);
 
@@ -69,51 +76,77 @@ export default function ScannerPage() {
   };
 
   const handleMarkerDetected = () => {
-    console.log('🎯 Scanner Page: Marker detected, setting state...');
+    console.log('🎯 [STEP 2] Marker detected!');
+    console.log('   → Setting isMarkerDetected = true');
+    console.log('   → Mascot should now be visible');
     setIsMarkerDetected(true);
   };
 
   const handleMarkerLost = () => {
-    console.log('❌ Scanner Page: Marker lost, clearing state...');
+    console.log('❌ [MARKER LOST] User moved camera away from marker');
+    console.log('   → Setting isMarkerDetected = false');
+    console.log('   → Mascot will be hidden');
     setIsMarkerDetected(false);
   };
 
   const handleMascotLoaded = () => {
-    console.log('✅ Scanner Page: Mascot loaded, setting state...');
+    console.log('✅ [STEP 3] Mascot (Oliver) loaded successfully!');
+    console.log('   → Setting isMascotLoaded = true');
+    console.log('   → Speech bubble should appear soon (2 second delay)');
     setIsMascotLoaded(true);
   };
 
   const handleOliverPositionUpdate = (x: number, y: number) => {
+    // Only log occasionally to avoid spam
     setOliverPosition({ x, y });
   };
 
   const handleRiddleClick = () => {
+    console.log('💬 [STEP 4] User tapped on speech bubble');
+    console.log('   → Opening riddle overlay modal');
+    console.log('   → Pausing AR (isPaused = true)');
+    console.log('   → AR rendering will pause to save resources');
     setIsOverlayOpen(true);
     setIsPaused(true);
   };
 
   const handleAnswerSubmit = (answer: string) => {
+    console.log('📝 [STEP 5] User submitted answer:', answer);
     // Check if answer is correct
     const isCorrect = answer.toLowerCase().trim() === currentLocation?.arRiddle?.answer.toLowerCase();
-    
+    console.log('   → Correct answer:', currentLocation?.arRiddle?.answer);
+    console.log('   → Is correct?', isCorrect);
+
     if (isCorrect && currentLocation && quest) {
+      console.log('✅ [STEP 6] Correct answer! Moving to next location...');
       // Move to next location
       const currentIndex = quest.locations.findIndex(loc => loc.id === currentLocation.id);
       const nextLocation = quest.locations[currentIndex + 1];
-      
+
+      console.log('   → Current location index:', currentIndex);
+      console.log('   → Next location:', nextLocation?.name || 'FINISH');
+
       if (nextLocation) {
         updateProgress(quest.id, nextLocation.id);
+        console.log('   → Progress updated to:', nextLocation.id);
       }
-      
+
       // Show success message
       setTimeout(() => {
         alert('🎉 Correct! Location completed! Next clue unlocked.');
+        console.log('   → Redirecting back to quest page...');
         router.back(); // Go back to quest detail page
       }, 1000);
+    } else {
+      console.log('❌ [INCORRECT] Wrong answer provided');
     }
   };
 
   const handleCloseOverlay = () => {
+    console.log('🔙 [BACK TO SCAN] User closed overlay');
+    console.log('   → Closing overlay (isOverlayOpen = false)');
+    console.log('   → Resuming AR (isPaused = false)');
+    console.log('   → User can scan marker again');
     setIsOverlayOpen(false);
     setIsPaused(false);
   };

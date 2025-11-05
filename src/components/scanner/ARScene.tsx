@@ -70,25 +70,33 @@ export function ARScene({
 
   const initializeAR = async () => {
     try {
+      console.log('═══════════════════════════════════════════');
+      console.log('🎬 [AR INIT START] Beginning AR initialization...');
+      console.log('═══════════════════════════════════════════');
+
       // Step 1: Request camera permission
       setStatus('requesting-camera');
-      console.log('Requesting camera permission...');
+      console.log('📹 [AR STEP 1/6] Requesting camera permission...');
       
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
           facingMode: 'environment',
           width: { ideal: 1280 },
           height: { ideal: 720 }
-        } 
+        }
       });
-      console.log('Camera permission granted');
-      
+      console.log('✅ [AR STEP 1/6] Camera permission granted');
+      console.log('   → Camera facing: environment (back camera)');
+      console.log('   → Resolution: 1280x720 (ideal)');
+
       // Stop the test stream - MindAR will create its own
       stream.getTracks().forEach(track => track.stop());
+      console.log('   → Test stream stopped, MindAR will create its own');
 
       // Step 2: Load MindAR and Three.js as ES modules (browser-only, runtime loading)
       setStatus('loading-libraries');
-      console.log('Loading AR libraries...');
+      console.log('📚 [AR STEP 2/6] Loading AR libraries (MindAR + Three.js)...');
+      console.log('   → This may take a few seconds on first load');
 
       // CRITICAL FIX: Load scripts one by one and wait for each to be ready
       // This ensures proper initialization order
@@ -162,39 +170,45 @@ export function ARScene({
         checkLibraries();
       });
       
-      console.log('All AR libraries loaded successfully!');
-      
+      console.log('✅ [AR STEP 2/6] All AR libraries loaded successfully!');
+
       const MindARThree = (window as any).MindARThree;
       const THREE = (window as any).THREE;
       const GLTFLoader = (window as any).GLTFLoader;
-      
+
       if (!MindARThree || !THREE || !GLTFLoader) {
+        console.error('❌ [ERROR] Libraries loaded but not accessible on window');
         throw new Error('Libraries loaded but not accessible on window');
       }
 
       // Step 3: Initialize MindAR (exactly like the working example)
       setStatus('initializing');
-      console.log('Initializing MindAR...');
+      console.log('🎯 [AR STEP 3/6] Initializing MindAR engine...');
+      console.log('   → Marker file:', markerFile);
 
       // Check if target file is accessible
       try {
+        console.log('   → Checking if marker file is accessible...');
         const response = await fetch(markerFile);
         if (!response.ok) {
+          console.error('❌ [ERROR] Marker file not accessible:', response.status);
           throw new Error(`Target file not accessible: ${response.status}`);
         }
-        console.log('Target file accessible:', response.ok);
+        console.log('   ✅ Marker file accessible');
       } catch (err) {
-        console.error('Target file check failed:', err);
+        console.error('❌ [ERROR] Target file check failed:', err);
         throw new Error('AR target file not found');
       }
-      
+
       // Create MindAR instance
+      console.log('   → Creating MindAR instance...');
       const mindarThree = new MindARThree({
         container: containerRef.current,
         imageTargetSrc: markerFile
       });
       mindarThreeRef.current = mindarThree;
-      console.log('MindAR instance created successfully');
+      console.log('✅ [AR STEP 3/6] MindAR instance created successfully');
+      console.log('   → Now ready to load 3D model and start scanning');
 
       const { renderer, scene, camera } = mindarThree;
       const clock = new THREE.Clock();
@@ -215,11 +229,14 @@ export function ARScene({
       console.log('Lighting added:', { ambient: ambientLight.intensity, dirLight1: dirLight1.intensity, dirLight2: dirLight2.intensity });
 
       // Load 3D model
+      console.log('🎨 [AR STEP 4/6] Loading 3D mascot model...');
+      console.log('   → Model file:', mascotModel);
       const gltfLoader = new GLTFLoader();
-      console.log('Loading 3D model:', mascotModel);
-      
+
       const gltf = await gltfLoader.loadAsync(mascotModel);
       const oliver = gltf.scene;
+      console.log('✅ [AR STEP 4/6] 3D model loaded successfully');
+      console.log('   → Model has', oliver.children.length, 'children');
       
       // EXACT APPROACH FROM WORKING EXAMPLE (lines 62-80 of app.js)
       // Disable frustum culling first and ensure proper material rendering
@@ -424,16 +441,21 @@ export function ARScene({
       });
 
       // Start AR
-      console.log('Starting MindAR...');
-      console.log('🎬 Scene info before start:', {
-        sceneChildren: scene.children.length,
-        anchorChildren: anchor.group.children.length,
-        rendererSize: { width: renderer.domElement.width, height: renderer.domElement.height }
-      });
-      
+      console.log('🚀 [AR STEP 5/6] Starting MindAR engine...');
+      console.log('   → Scene children:', scene.children.length);
+      console.log('   → Anchor children:', anchor.group.children.length);
+      console.log('   → Renderer size:', renderer.domElement.width, 'x', renderer.domElement.height);
+
       await mindarThree.start();
-      console.log('✅ MindAR started successfully');
-      console.log('📹 Camera active, renderer running, waiting for marker...');
+      console.log('✅ [AR STEP 5/6] MindAR started successfully!');
+      console.log('   → Camera feed is now active');
+      console.log('   → Renderer is running');
+      console.log('');
+      console.log('📷 [SCANNING MODE] 🔍');
+      console.log('═══════════════════════════════════════════');
+      console.log('   Point your camera at the marker to detect it');
+      console.log('   Waiting for marker detection...');
+      console.log('═══════════════════════════════════════════');
 
       // DEBUG: Check if renderer canvas is visible
       console.log('🎥 RENDERER CANVAS DEBUG:', {
@@ -479,12 +501,31 @@ export function ARScene({
       isInitializingRef.current = false;
 
       setStatus('ready');
-      console.log('AR Scene ready!');
+      console.log('✅ [AR STEP 6/6] AR Scene is READY!');
+      console.log('═══════════════════════════════════════════');
+      console.log('🎉 AR INITIALIZATION COMPLETE!');
+      console.log('═══════════════════════════════════════════');
+      console.log('');
 
     } catch (err) {
-      console.error('AR initialization failed:', err);
+      console.error('═══════════════════════════════════════════');
+      console.error('❌ [FATAL ERROR] AR initialization failed!');
+      console.error('═══════════════════════════════════════════');
+      console.error('Error details:', err);
+      console.error('Error message:', err instanceof Error ? err.message : 'Unknown error');
+      console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace');
+      console.error('');
+      console.error('Possible causes:');
+      console.error('  1. Camera permission denied');
+      console.error('  2. Marker file not found or inaccessible');
+      console.error('  3. 3D model file not found or inaccessible');
+      console.error('  4. Browser compatibility issue');
+      console.error('  5. Network error loading libraries');
+      console.error('═══════════════════════════════════════════');
+
       setError(err instanceof Error ? err.message : 'AR initialization failed');
       setStatus('error');
+
       // Reset flags on error so user can retry (both module-level and ref flags)
       arSceneInitializing = false;
       arSceneInitialized = false;
