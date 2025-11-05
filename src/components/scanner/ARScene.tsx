@@ -279,7 +279,7 @@ export function ARScene({
       // Play animation if available
       if (gltf.animations && gltf.animations.length > 0) {
         console.log('🎬 Animations found:', gltf.animations.length);
-        gltf.animations.forEach((anim, idx) => {
+        gltf.animations.forEach((anim: any, idx: number) => {
           console.log(`  Animation ${idx}:`, anim.name, 'duration:', anim.duration);
         });
 
