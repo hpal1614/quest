@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
+// Module-level flag to prevent double initialization across React Strict Mode remounts
+// This persists even when the component unmounts/remounts
+let arSceneInitialized = false;
+let arSceneInitializing = false;
+
 interface ARSceneProps {
   markerFile: string;
   mascotModel: string;
@@ -10,15 +15,17 @@ interface ARSceneProps {
   onMarkerLost: () => void;
   onMascotLoaded: () => void;
   isPaused: boolean;
+  onOliverPositionUpdate?: (screenX: number, screenY: number) => void;
 }
 
-export function ARScene({ 
-  markerFile, 
-  mascotModel, 
-  onMarkerDetected, 
-  onMarkerLost, 
+export function ARScene({
+  markerFile,
+  mascotModel,
+  onMarkerDetected,
+  onMarkerLost,
   onMascotLoaded,
-  isPaused 
+  isPaused,
+  onOliverPositionUpdate
 }: ARSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mindarThreeRef = useRef<any>(null);
@@ -26,13 +33,26 @@ export function ARScene({
   const mixerRef = useRef<any>(null);
   const gltfRef = useRef<any>(null);
   const isPausedRef = useRef(isPaused);
+  const isInitializedRef = useRef(false);
+  const isInitializingRef = useRef(false);
+  const frameCountRef = useRef(0);
+  const targetFoundRef = useRef(false);
   const [status, setStatus] = useState<'loading' | 'requesting-camera' | 'loading-libraries' | 'initializing' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [isMarkerVisible, setIsMarkerVisible] = useState(false);
 
   useEffect(() => {
+    // Prevent double initialization in React Strict Mode using module-level flags
+    // Module-level flags persist across component unmount/remount cycles
+    if (arSceneInitialized || arSceneInitializing) {
+      console.log('⏭️ AR already initialized or initializing (module-level check), skipping...');
+      return;
+    }
+
+    arSceneInitializing = true;
+    console.log('🎬 Starting AR initialization (first time)...');
     initializeAR();
-    
+
     return () => {
       cleanup();
     };
@@ -258,23 +278,20 @@ export function ARScene({
       
       // Play animation if available
       if (gltf.animations && gltf.animations.length > 0) {
+        console.log('🎬 Animations found:', gltf.animations.length);
+        gltf.animations.forEach((anim, idx) => {
+          console.log(`  Animation ${idx}:`, anim.name, 'duration:', anim.duration);
+        });
+
         mixerRef.current = new THREE.AnimationMixer(model);
         const action = mixerRef.current.clipAction(gltf.animations[0]);
+        action.setLoop(THREE.LoopRepeat, Infinity); // Loop forever
         action.play();
-        console.log('Model animation started');
+        console.log('✅ Animation started and looping:', gltf.animations[0].name);
+      } else {
+        console.warn('⚠️ No animations found in model');
       }
-      
-      // Add GIANT RED SPHERE for absolute visibility test
-      const sphereGeo = new THREE.SphereGeometry(0.05, 32, 32); // Small 5cm sphere for debug
-      const sphereMat = new THREE.MeshBasicMaterial({ 
-        color: 0xff0000,
-        wireframe: false
-      });
-      const redSphere = new THREE.Mesh(sphereGeo, sphereMat);
-      redSphere.position.set(0, 0.15, 0); // Slightly above marker so Oliver stays visible
-      anchor.group.add(redSphere);
-      console.log('🔴 Debug red sphere added at (0, 0.15, 0)');
-      
+
       // Wrap Oliver in a Group (EXACT approach from vision-ar line 83)
       const oliverGroup = new THREE.Group();
       oliverGroup.name = 'oliverGroup';
@@ -291,8 +308,8 @@ export function ARScene({
       
       // Add to anchor
       anchor.group.add(oliverGroup);
-      console.log('✅ Oliver group added to anchor (ALWAYS VISIBLE for testing)');
-      console.log('📦 Anchor children:', anchor.group.children.length, '(should be 2: sphere + Oliver)');
+      console.log('✅ Oliver group added to anchor');
+      console.log('📦 Anchor children:', anchor.group.children.length);
       console.log('📊 Oliver group details:', {
         position: oliverGroup.position,
         scale: oliverGroup.scale,
@@ -305,8 +322,15 @@ export function ARScene({
 
       // Set up marker detection events (EXACT from vision-ar lines 266-399)
       anchor.onTargetFound = () => {
+        // Prevent duplicate target found events
+        if (targetFoundRef.current) {
+          console.log('🎯 Target already found, ignoring duplicate event');
+          return;
+        }
+
+        targetFoundRef.current = true;
         console.log('🎯 Target found - showing Oliver!');
-        
+
         // Show Oliver immediately (like burjModel.visible = true at line 271)
         try {
           if (oliverGroupRef.current) {
@@ -323,14 +347,20 @@ export function ARScene({
               }
             });
             
-            // Play animations if available
+            // Ensure animations continue playing
             if (mixerRef.current && gltfRef.current) {
               try {
                 const anims = gltfRef.current.animations;
                 if (anims && anims.length > 0) {
                   const firstAction = mixerRef.current.clipAction(anims[0]);
-                  firstAction.play();
-                  console.log('▶️ Animation playing');
+                  if (!firstAction.isRunning()) {
+                    firstAction.reset();
+                    firstAction.setLoop(THREE.LoopRepeat, Infinity);
+                    firstAction.play();
+                    console.log('▶️ Animation restarted');
+                  } else {
+                    console.log('▶️ Animation already running');
+                  }
                 }
               } catch(e) {
                 console.warn('Animation start failed:', e);
@@ -347,23 +377,47 @@ export function ARScene({
 
       anchor.onTargetLost = () => {
         console.log('❌ Target lost - hiding Oliver');
-        
+
+        // Reset target found flag so it can be detected again
+        targetFoundRef.current = false;
+
         // Hide Oliver when marker lost (like line 383)
         try {
           if (oliverGroupRef.current) {
             oliverGroupRef.current.visible = false;
           }
         } catch(e) {}
-        
+
         setIsMarkerVisible(false);
         onMarkerLost();
       };
 
       renderer.setAnimationLoop(() => {
+        const delta = clock.getDelta();
+
         if (mixerRef.current && !isPausedRef.current) {
-          mixerRef.current.update(clock.getDelta());
-        } else {
-          clock.getDelta();
+          mixerRef.current.update(delta);
+
+          // Debug log every 120 frames (~2 seconds at 60fps)
+          frameCountRef.current++;
+          if (frameCountRef.current % 120 === 0) {
+            console.log('🎬 Animation mixer updating, delta:', delta.toFixed(4));
+          }
+        }
+
+        // Calculate Oliver's screen position for speech bubble
+        if (oliverGroupRef.current && onOliverPositionUpdate && oliverGroupRef.current.visible) {
+          const vector = new THREE.Vector3();
+          oliverGroupRef.current.getWorldPosition(vector);
+
+          // Project 3D position to 2D screen coordinates
+          vector.project(camera);
+
+          // Convert normalized device coordinates (-1 to +1) to screen pixels
+          const x = (vector.x * 0.5 + 0.5) * renderer.domElement.width;
+          const y = (vector.y * -0.5 + 0.5) * renderer.domElement.height;
+
+          onOliverPositionUpdate(x, y);
         }
 
         renderer.render(scene, camera);
@@ -380,7 +434,7 @@ export function ARScene({
       await mindarThree.start();
       console.log('✅ MindAR started successfully');
       console.log('📹 Camera active, renderer running, waiting for marker...');
-      
+
       // DEBUG: Check if renderer canvas is visible
       console.log('🎥 RENDERER CANVAS DEBUG:', {
         canvas: renderer.domElement,
@@ -391,7 +445,7 @@ export function ARScene({
         canvasStyle: renderer.domElement.style.cssText,
         containerHasCanvas: containerRef.current?.contains(renderer.domElement)
       });
-      
+
       // Force canvas to be visible
       renderer.domElement.style.display = 'block';
       renderer.domElement.style.position = 'absolute';
@@ -401,7 +455,13 @@ export function ARScene({
       renderer.domElement.style.height = '100%';
       renderer.domElement.style.zIndex = '1';
       console.log('🔧 Forced canvas styles applied');
-      
+
+      // Mark as successfully initialized (module-level flags)
+      arSceneInitialized = true;
+      arSceneInitializing = false;
+      isInitializedRef.current = true;
+      isInitializingRef.current = false;
+
       setStatus('ready');
       console.log('AR Scene ready!');
 
@@ -409,10 +469,16 @@ export function ARScene({
       console.error('AR initialization failed:', err);
       setError(err instanceof Error ? err.message : 'AR initialization failed');
       setStatus('error');
+      // Reset flags on error so user can retry (both module-level and ref flags)
+      arSceneInitializing = false;
+      arSceneInitialized = false;
+      isInitializingRef.current = false;
+      isInitializedRef.current = false;
     }
   };
 
   const cleanup = () => {
+    console.log('🧹 Cleaning up AR scene...');
     if (mindarThreeRef.current) {
       const { renderer } = mindarThreeRef.current;
       renderer.setAnimationLoop(null);
@@ -422,6 +488,12 @@ export function ARScene({
     oliverGroupRef.current = null;
     mixerRef.current = null;
     gltfRef.current = null;
+
+    // Reset ref flags but NOT module-level flags
+    // Module-level flags should persist to prevent re-initialization in Strict Mode
+    isInitializedRef.current = false;
+    isInitializingRef.current = false;
+    console.log('✅ Cleanup complete (module flags preserved to prevent re-init)');
   };
 
   const getStatusMessage = () => {

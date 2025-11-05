@@ -22,6 +22,16 @@ export default function ScannerPage() {
   
   const { location } = useGeolocation();
   const { progress, currentLocation, updateProgress } = useQuestProgress(quest!);
+
+  // Debug: Log current location info
+  useEffect(() => {
+    console.log('📍 Current Location Debug:', {
+      currentLocationId: progress?.currentLocationId,
+      currentLocationName: currentLocation?.name,
+      hasArRiddle: !!currentLocation?.arRiddle,
+      arRiddleData: currentLocation?.arRiddle
+    });
+  }, [progress, currentLocation]);
   
   // AR State - Auto-start AR immediately
   const [isARActive, setIsARActive] = useState(true); // Changed to true
@@ -29,6 +39,7 @@ export default function ScannerPage() {
   const [isMascotLoaded, setIsMascotLoaded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [oliverPosition, setOliverPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!quest) {
@@ -58,15 +69,22 @@ export default function ScannerPage() {
   };
 
   const handleMarkerDetected = () => {
+    console.log('🎯 Scanner Page: Marker detected, setting state...');
     setIsMarkerDetected(true);
   };
 
   const handleMarkerLost = () => {
+    console.log('❌ Scanner Page: Marker lost, clearing state...');
     setIsMarkerDetected(false);
   };
 
   const handleMascotLoaded = () => {
+    console.log('✅ Scanner Page: Mascot loaded, setting state...');
     setIsMascotLoaded(true);
+  };
+
+  const handleOliverPositionUpdate = (x: number, y: number) => {
+    setOliverPosition({ x, y });
   };
 
   const handleRiddleClick = () => {
@@ -133,20 +151,32 @@ export default function ScannerPage() {
           >
               <ARScene
                 markerFile={currentLocation.arRiddle?.markerFile || '/assets/mind-file/postcard.mind'}
-                mascotModel={currentLocation.arRiddle?.mascotModel || '/assets/Oliver/biped/Character_output.glb'}
+                mascotModel={currentLocation.arRiddle?.mascotModel || '/assets/Oliver/biped/Meshy_Merged_Animations.glb'}
                 onMarkerDetected={handleMarkerDetected}
                 onMarkerLost={handleMarkerLost}
                 onMascotLoaded={handleMascotLoaded}
                 isPaused={isPaused}
+                onOliverPositionUpdate={handleOliverPositionUpdate}
               />
 
               {/* Speech Bubble */}
-              {isMarkerDetected && isMascotLoaded && currentLocation.arRiddle && (
+              {(() => {
+                console.log('💬 Speech Bubble Check:', {
+                  isMarkerDetected,
+                  isMascotLoaded,
+                  hasArRiddle: !!currentLocation?.arRiddle,
+                  isOverlayOpen,
+                  shouldShow: isMarkerDetected && isMascotLoaded && !!currentLocation?.arRiddle
+                });
+                return null;
+              })()}
+              {isMarkerDetected && isMascotLoaded && currentLocation?.arRiddle && (
                 <SpeechBubble
                   riddle={currentLocation.arRiddle}
                   onRiddleClick={handleRiddleClick}
                   delay={2000}
                   isVisible={!isOverlayOpen}
+                  oliverPosition={oliverPosition}
                 />
               )}
           </motion.div>

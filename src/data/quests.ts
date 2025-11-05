@@ -52,7 +52,7 @@ export const QUESTS: Quest[] = [
             'It needs walls or surfaces to work',
             'You hear it in caves and mountains'
           ],
-          mascotModel: '/assets/Oliver/biped/Character_output.glb',
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
           markerFile: '/assets/mind-file/postcard.mind'
         }
       },
@@ -168,16 +168,27 @@ export const QUESTS: Quest[] = [
         id: 'start',
         name: 'Paddy\'s Markets',
         type: 'start',
-        coordinates: { lat: -33.88150244922693, lng: 151.20428242435628 },
+        coordinates: { lat: -33.88163879853443, lng: 151.20455624242229 },
         radius: 50,
         clue: 'Start your sensory journey at Sydney\'s most iconic market, bustling with sights, sounds, and flavors...',
-        question: null
+        question: null,
+        arRiddle: {
+          text: 'I speak without a mouth and hear without ears. I have nobody, but I come alive with wind. What am I?',
+          answer: 'echo',
+          hints: [
+            'It repeats what you say',
+            'It needs walls or surfaces to work',
+            'You hear it in caves and mountains'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
+        }
       },
       {
         id: 'location_a',
         name: 'Chinese Garden of Friendship',
         type: 'checkpoint',
-        coordinates: { lat: -33.8768, lng: 151.2017 },
+        coordinates: { lat: -33.88163879853443, lng: 151.20455624242229 },
         radius: 50,
         clue: 'Find tranquility in this traditional Chinese garden, a symbol of friendship between Sydney and Guangzhou...',
         question: {
@@ -189,13 +200,24 @@ export const QUESTS: Quest[] = [
             'Formerly known as Canton',
             'Guangzhou'
           ]
+        },
+        arRiddle: {
+          text: 'What Chinese city is this garden\'s partnership with?',
+          answer: 'Guangzhou',
+          hints: [
+            'It\'s a major city in southern China',
+            'Formerly known as Canton',
+            'It starts with G'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
         }
       },
       {
         id: 'location_b',
         name: 'Darling Square',
         type: 'checkpoint',
-        coordinates: { lat: -33.8765, lng: 151.2005 },
+        coordinates: { lat: -33.88163879853443, lng: 151.20455624242229 },
         radius: 50,
         clue: 'Explore this modern urban plaza with its distinctive architecture and vibrant atmosphere...',
         question: {
@@ -207,13 +229,24 @@ export const QUESTS: Quest[] = [
             'Think just before 2020',
             'Darling Square opened in twenty nineteen'
           ]
+        },
+        arRiddle: {
+          text: 'What year did Darling Square officially open?',
+          answer: '2019',
+          hints: [
+            'It opened in the late 2010s',
+            'Think just before 2020',
+            'The year before 2020'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
         }
       },
       {
         id: 'location_c',
         name: 'Capitol Theatre',
         type: 'checkpoint',
-        coordinates: { lat: -33.8798, lng: 151.2058 },
+        coordinates: { lat: -33.88163879853443, lng: 151.20455624242229 },
         radius: 50,
         clue: 'Visit this historic theater, known for its stunning interior and world-class performances...',
         question: {
@@ -225,13 +258,24 @@ export const QUESTS: Quest[] = [
             'Based on T.S. Eliot\'s poems',
             'The musical Cats'
           ]
+        },
+        arRiddle: {
+          text: 'What famous musical premiered here in 1996?',
+          answer: 'Cats',
+          hints: [
+            'It\'s a musical about felines',
+            'Based on T.S. Eliot\'s poems',
+            'Meow meow!'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
         }
       },
       {
         id: 'location_d',
         name: 'Central Station',
         type: 'checkpoint',
-        coordinates: { lat: -33.8838, lng: 151.2062 },
+        coordinates: { lat: -33.88163879853443, lng: 151.20455624242229 },
         radius: 50,
         clue: 'Find Sydney\'s busiest transport hub, crowned by an iconic clock tower...',
         question: {
@@ -243,13 +287,24 @@ export const QUESTS: Quest[] = [
             'Think just after the turn of the 20th century',
             'Central Station opened in nineteen oh six'
           ]
+        },
+        arRiddle: {
+          text: 'In what year did Central Station open?',
+          answer: '1906',
+          hints: [
+            'It opened in the early 1900s',
+            'Think just after the turn of the 20th century',
+            'Nineteen oh six'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
         }
       },
       {
         id: 'finish',
         name: 'Belmore Park',
         type: 'finish',
-        coordinates: { lat: -33.8828, lng: 151.2081 },
+        coordinates: { lat: -33.88163879853443, lng: 151.20455624242229 },
         radius: 50,
         clue: 'Complete your sensory journey in this peaceful park next to Central Station...',
         question: {
@@ -261,6 +316,17 @@ export const QUESTS: Quest[] = [
             'Think Earl of...',
             'Earl of Belmore'
           ]
+        },
+        arRiddle: {
+          text: 'Who is this park named after?',
+          answer: 'Earl of Belmore',
+          hints: [
+            'Named after a British aristocrat',
+            'Think Earl of...',
+            'Starts with Earl'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
         }
       }
     ],
