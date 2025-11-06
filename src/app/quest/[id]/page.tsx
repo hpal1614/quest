@@ -50,6 +50,23 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
   const [distanceToCurrentLocation, setDistanceToCurrentLocation] = useState<number | null>(null);
   const [isWithinRange, setIsWithinRange] = useState(quest.isDemo || false);
 
+  // Clean up any stuck MindAR UI elements on page load
+  useEffect(() => {
+    const cleanupMindARUI = () => {
+      const mindarElements = document.querySelectorAll('.mindar-ui-overlay, .mindar-ui-scanning, .scanning');
+      if (mindarElements.length > 0) {
+        console.log('🧹 Cleaning up', mindarElements.length, 'stuck MindAR UI elements');
+        mindarElements.forEach(el => {
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        });
+      }
+    };
+
+    cleanupMindARUI();
+  }, []);
+
   // Demo quests are always "within range"
   useEffect(() => {
     if (quest.isDemo) {

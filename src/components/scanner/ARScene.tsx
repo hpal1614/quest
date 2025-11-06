@@ -567,21 +567,82 @@ export function ARScene({
 
   const cleanup = () => {
     console.log('🧹 Cleaning up AR scene...');
+
+    // Stop MindAR and renderer
     if (mindarThreeRef.current) {
-      const { renderer } = mindarThreeRef.current;
-      renderer.setAnimationLoop(null);
-      mindarThreeRef.current.stop();
+      try {
+        const { renderer } = mindarThreeRef.current;
+        renderer.setAnimationLoop(null);
+        mindarThreeRef.current.stop();
+
+        // Dispose of Three.js resources
+        if (renderer.domElement && renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+        renderer.dispose();
+
+        console.log('✅ MindAR and renderer stopped');
+      } catch (e) {
+        console.warn('⚠️ Error stopping MindAR:', e);
+      }
       mindarThreeRef.current = null;
     }
+
+    // Remove MindAR UI elements from DOM
+    try {
+      // Query for MindAR UI elements in the container
+      const container = containerRef.current;
+      if (container) {
+        const mindarOverlays = container.querySelectorAll('.mindar-ui-overlay, .mindar-ui-scanning, .scanning');
+        mindarOverlays.forEach(el => {
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        });
+        console.log('✅ Removed', mindarOverlays.length, 'MindAR UI elements');
+      }
+
+      // Also check document body for any escaped UI elements
+      const bodyOverlays = document.querySelectorAll('.mindar-ui-overlay, .mindar-ui-scanning, .scanning');
+      bodyOverlays.forEach(el => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+      if (bodyOverlays.length > 0) {
+        console.log('✅ Removed', bodyOverlays.length, 'MindAR UI elements from body');
+      }
+    } catch (e) {
+      console.warn('⚠️ Error removing MindAR UI elements:', e);
+    }
+
+    // Stop camera stream
+    try {
+      const videoElement = containerRef.current?.querySelector('video');
+      if (videoElement) {
+        const stream = (videoElement as HTMLVideoElement).srcObject as MediaStream;
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+          console.log('✅ Camera stream stopped');
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Error stopping camera:', e);
+    }
+
     oliverGroupRef.current = null;
     mixerRef.current = null;
     gltfRef.current = null;
 
-    // Reset ref flags but NOT module-level flags
-    // Module-level flags should persist to prevent re-initialization in Strict Mode
+    // Reset module-level flags to allow re-initialization
+    arSceneInitialized = false;
+    arSceneInitializing = false;
+
+    // Reset ref flags
     isInitializedRef.current = false;
     isInitializingRef.current = false;
-    console.log('✅ Cleanup complete (module flags preserved to prevent re-init)');
+
+    console.log('✅ Cleanup complete');
   };
 
   const getStatusMessage = () => {
