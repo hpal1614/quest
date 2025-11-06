@@ -16,6 +16,7 @@ interface ARSceneProps {
   onMascotLoaded: () => void;
   isPaused: boolean;
   onOliverPositionUpdate?: (screenX: number, screenY: number) => void;
+  hideUI?: boolean;
 }
 
 export function ARScene({
@@ -25,7 +26,8 @@ export function ARScene({
   onMarkerLost,
   onMascotLoaded,
   isPaused,
-  onOliverPositionUpdate
+  onOliverPositionUpdate,
+  hideUI = false
 }: ARSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mindarThreeRef = useRef<any>(null);
@@ -604,8 +606,8 @@ export function ARScene({
         }}
       />
       
-      {/* Status Overlay */}
-      {status !== 'ready' && (
+      {/* Status Overlay - Hidden when riddle overlay is open */}
+      {!hideUI && status !== 'ready' && (
         <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center" style={{ zIndex: 10 }}>
           <div className="text-center text-white">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
@@ -616,10 +618,10 @@ export function ARScene({
           </div>
         </div>
       )}
-      
-      {/* Instruction Overlay */}
-      {status === 'ready' && !isMarkerVisible && (
-        <motion.div 
+
+      {/* Instruction Overlay - Hidden when riddle overlay is open */}
+      {!hideUI && status === 'ready' && !isMarkerVisible && (
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-4 left-4 right-4 bg-white bg-opacity-90 rounded-lg p-4 shadow-lg"
@@ -630,10 +632,10 @@ export function ARScene({
           </p>
         </motion.div>
       )}
-      
-      {/* Marker Detection Indicator */}
-      {status === 'ready' && isMarkerVisible && (
-        <motion.div 
+
+      {/* Marker Detection Indicator - Hidden when riddle overlay is open */}
+      {!hideUI && status === 'ready' && isMarkerVisible && (
+        <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="absolute top-4 left-4 right-4 bg-green-500 bg-opacity-90 rounded-lg p-4 shadow-lg"

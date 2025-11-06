@@ -62,17 +62,17 @@ export function OverlayModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50"
+            className="fixed inset-0 bg-black bg-opacity-50 z-[100]"
             onClick={handleClose}
           />
-          
+
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 50 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-4 z-50 flex items-center justify-center"
+            className="fixed inset-4 z-[101] flex items-center justify-center pointer-events-auto"
           >
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden">
               {/* Header */}

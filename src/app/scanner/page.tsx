@@ -190,6 +190,7 @@ export default function ScannerPage() {
                 onMascotLoaded={handleMascotLoaded}
                 isPaused={isPaused}
                 onOliverPositionUpdate={handleOliverPositionUpdate}
+                hideUI={isOverlayOpen}
               />
 
               {/* Speech Bubble */}
