@@ -53,7 +53,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         {/* CTA Button */}
         <button
           onClick={onComplete}
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-gray-900 font-bold py-4 px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           Get Started
         </button>

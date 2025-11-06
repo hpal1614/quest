@@ -76,15 +76,15 @@ export function OverlayModal({
           >
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden">
               {/* Header */}
-              <div className={`bg-gradient-to-r ${questTheme.gradient} text-white p-6`}>
+              <div className={`bg-gradient-to-r ${questTheme.gradient} p-6`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{questTheme.icon}</span>
-                    <h2 className="text-xl font-bold">Riddle Challenge</h2>
+                    <h2 className="text-xl font-bold text-gray-900">Riddle Challenge</h2>
                   </div>
                   <button
                     onClick={handleClose}
-                    className="text-white hover:text-gray-200 text-2xl"
+                    className="text-gray-900 hover:text-gray-700 text-2xl"
                   >
                     ×
                   </button>
@@ -138,7 +138,7 @@ export function OverlayModal({
                         disabled={!userAnswer.trim()}
                         className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all ${
                           userAnswer.trim()
-                            ? `bg-gradient-to-r ${questTheme.gradient} text-white shadow-lg hover:shadow-xl active:scale-95`
+                            ? `bg-gradient-to-r ${questTheme.gradient} text-gray-900 shadow-lg hover:shadow-xl active:scale-95`
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                       >

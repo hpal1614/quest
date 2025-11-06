@@ -136,7 +136,7 @@ export default function HistoryPage() {
             </p>
             <button
               onClick={() => router.push('/')}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-gray-900 font-bold py-3 px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg"
             >
               VIEW QUESTS
             </button>

@@ -82,8 +82,8 @@ export function QuestCard({ quest, distance, userLocation }: QuestCardProps) {
 
   const cardClasses = `
     relative rounded-xl p-6 cursor-pointer transition-all duration-300 overflow-hidden
-    ${isAvailable 
-      ? 'bg-gradient-to-r ' + quest.theme.gradient + ' text-white scale-105 shadow-2xl' 
+    ${isAvailable
+      ? 'bg-gradient-to-r ' + quest.theme.gradient + ' text-gray-900 scale-105 shadow-2xl'
       : category === 'nearby'
       ? 'bg-white text-gray-800 shadow-md hover:shadow-lg'
       : 'bg-gray-100 text-gray-500 opacity-60'}
@@ -117,11 +117,11 @@ export function QuestCard({ quest, distance, userLocation }: QuestCardProps) {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">{quest.theme.icon}</span>
-              <h3 className={`text-xl font-bold ${isAvailable ? 'text-white' : ''}`}>
+              <h3 className={`text-xl font-bold ${isAvailable ? 'text-gray-900' : ''}`}>
                 {quest.title}
               </h3>
             </div>
-            <p className={`text-sm ${isAvailable ? 'text-white/90' : 'text-gray-600'}`}>
+            <p className={`text-sm ${isAvailable ? 'text-gray-800' : 'text-gray-600'}`}>
               Week {quest.weekNumber}
             </p>
           </div>
@@ -131,20 +131,20 @@ export function QuestCard({ quest, distance, userLocation }: QuestCardProps) {
         </div>
 
         {/* Description */}
-        <p className={`text-sm mb-4 ${isAvailable ? 'text-white/95' : 'text-gray-700'}`}>
+        <p className={`text-sm mb-4 ${isAvailable ? 'text-gray-800' : 'text-gray-700'}`}>
           {quest.description}
         </p>
 
         {/* Status Info */}
         <div className="flex items-center justify-between mb-3">
-          <div className={`text-sm ${isAvailable ? 'text-white/90' : 'text-gray-600'}`}>
+          <div className={`text-sm ${isAvailable ? 'text-gray-700' : 'text-gray-600'}`}>
             {quest.isDemo ? '📍 Demo (No GPS required)' : `📍 ${formatDistance(distance)} away`}
           </div>
           {getStatusBadge()}
         </div>
 
         {/* Duration */}
-        <p className={`text-xs mb-4 ${isAvailable ? 'text-white/80' : 'text-gray-500'}`}>
+        <p className={`text-xs mb-4 ${isAvailable ? 'text-gray-700' : 'text-gray-500'}`}>
           ⏱️ Est. {quest.estimatedDuration} minutes
         </p>
 

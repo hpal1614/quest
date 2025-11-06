@@ -51,7 +51,7 @@ export function ARButton({
       disabled={!isActive || !isWithinRange}
       className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 ${
         isActive && isWithinRange
-          ? `bg-gradient-to-r ${questTheme.gradient} text-white shadow-lg hover:shadow-xl active:scale-95`
+          ? `bg-gradient-to-r ${questTheme.gradient} text-gray-900 shadow-lg hover:shadow-xl active:scale-95`
           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
       }`}
       whileTap={isActive && isWithinRange ? { scale: 0.95 } : {}}

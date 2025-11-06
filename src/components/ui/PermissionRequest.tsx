@@ -124,7 +124,7 @@ export function PermissionRequest({ onGranted, onDenied }: PermissionRequestProp
           <button
             onClick={requestPermissions}
             disabled={requesting}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-gray-900 font-bold py-4 px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             {requesting ? 'Requesting...' : 'Allow Location'}
           </button>

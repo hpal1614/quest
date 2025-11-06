@@ -127,18 +127,18 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50">
       {/* Header */}
-      <header className={`bg-gradient-to-r ${quest.theme.gradient} text-white shadow-lg`}>
+      <header className={`bg-gradient-to-r ${quest.theme.gradient} shadow-lg`}>
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <button
               onClick={handleBack}
-              className="text-white hover:text-gray-200"
+              className="text-gray-900 hover:text-gray-700"
             >
               ← Back
             </button>
             <div className="flex-1">
-              <h1 className="text-xl font-bold">{quest.title}</h1>
-              <p className="text-sm text-white/90">Week {quest.weekNumber}</p>
+              <h1 className="text-xl font-bold text-gray-900">{quest.title}</h1>
+              <p className="text-sm text-gray-800">Week {quest.weekNumber}</p>
             </div>
             <span className="text-3xl">{quest.theme.icon}</span>
           </div>
@@ -212,7 +212,7 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
             </p>
             <button
               onClick={handleStartQuest}
-              className={`w-full bg-gradient-to-r ${quest.theme.gradient} text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all`}
+              className={`w-full bg-gradient-to-r ${quest.theme.gradient} text-gray-900 font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all`}
             >
               START QUEST
             </button>
@@ -268,7 +268,7 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
                 disabled={!isWithinRange}
                 className={`py-3 px-4 font-bold rounded-lg transition-all ${
                   isWithinRange
-                    ? 'bg-gradient-to-r ' + quest.theme.gradient + ' text-white shadow-lg hover:shadow-xl'
+                    ? 'bg-gradient-to-r ' + quest.theme.gradient + ' text-gray-900 shadow-lg hover:shadow-xl'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
