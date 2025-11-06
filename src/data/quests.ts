@@ -1,6 +1,115 @@
 import { Quest } from '@/types/quest';
 
 export const QUESTS: Quest[] = [
+  // DEMO QUEST - No GPS Required
+  {
+    id: 'quest_demo',
+    title: '🎯 Demo Quest',
+    description: 'Test the AR scavenger hunt without GPS requirements - perfect for demos and testing!',
+    weekNumber: 0,
+    startDate: '2024-01-01T00:00:00+11:00',
+    endDate: '2025-12-31T23:59:59+11:00',
+    status: 'active',
+    isDemo: true, // This bypasses GPS checks
+    theme: {
+      color: '#9333EA',
+      mascot: 'demo_explorer',
+      icon: '🎯',
+      gradient: 'from-purple-600 to-blue-600'
+    },
+    estimatedDuration: 15,
+    locations: [
+      {
+        id: 'demo_start',
+        name: 'Demo Start Location',
+        type: 'start',
+        coordinates: { lat: 0, lng: 0 }, // Dummy coordinates
+        radius: 50,
+        clue: 'Welcome to the demo quest! You can test all features without being at physical locations.',
+        question: null,
+        arRiddle: {
+          text: 'I speak without a mouth and hear without ears. I have nobody, but I come alive with wind. What am I?',
+          answer: 'echo',
+          hints: [
+            'It repeats what you say',
+            'It needs walls or surfaces to work',
+            'You hear it in caves and mountains'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
+        }
+      },
+      {
+        id: 'demo_checkpoint1',
+        name: 'Demo Checkpoint 1',
+        type: 'checkpoint',
+        coordinates: { lat: 0, lng: 0 }, // Dummy coordinates
+        radius: 50,
+        clue: 'This is the first checkpoint. Scan the AR marker to see Oliver!',
+        question: {
+          text: 'What is 2 + 2?',
+          answer: '4',
+          alternativeAnswers: ['four', 'Four'],
+          hints: [
+            'It\'s a simple addition',
+            'Two plus two',
+            'The answer is four'
+          ]
+        },
+        arRiddle: {
+          text: 'What has keys but no locks, space but no room, and you can enter but not go inside?',
+          answer: 'keyboard',
+          hints: [
+            'You use it with computers',
+            'It has a spacebar',
+            'You\'re probably using one right now!'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
+        }
+      },
+      {
+        id: 'demo_finish',
+        name: 'Demo Finish Location',
+        type: 'finish',
+        coordinates: { lat: 0, lng: 0 }, // Dummy coordinates
+        radius: 50,
+        clue: 'Final location! Complete this to finish the demo quest.',
+        question: {
+          text: 'What color is the sky on a clear day?',
+          answer: 'blue',
+          alternativeAnswers: ['Blue'],
+          hints: [
+            'It\'s a primary color',
+            'The ocean is often this color too',
+            'The answer is blue'
+          ]
+        },
+        arRiddle: {
+          text: 'The more you take, the more you leave behind. What am I?',
+          answer: 'footsteps',
+          hints: [
+            'Think about walking',
+            'You leave them behind when you walk',
+            'They are called footsteps'
+          ],
+          mascotModel: '/assets/Oliver/biped/Meshy_Merged_Animations.glb',
+          markerFile: '/assets/mind-file/postcard.mind'
+        }
+      }
+    ],
+    rewards: {
+      vouchers: [
+        {
+          id: 'demo_v001',
+          business: 'Demo Business',
+          offer: 'Demo Reward - Test Completed!',
+          code: 'DEMO-TEST-{UNIQUE_ID}'
+        }
+      ],
+      expirationDate: '2025-12-31T23:59:59+11:00'
+    }
+  },
   // Week 1: Urban Adventure (Nov 24-30)
   {
     id: 'quest_w1_urban',

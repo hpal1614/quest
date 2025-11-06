@@ -54,9 +54,14 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
     if (location && currentLocation) {
       const distance = calculateDistance(location, currentLocation.coordinates);
       setDistanceToCurrentLocation(distance);
-      setIsWithinRange(isWithinRadius(location, currentLocation.coordinates, currentLocation.radius));
+      // Demo quests bypass GPS requirements
+      if (quest.isDemo) {
+        setIsWithinRange(true);
+      } else {
+        setIsWithinRange(isWithinRadius(location, currentLocation.coordinates, currentLocation.radius));
+      }
     }
-  }, [location, currentLocation]);
+  }, [location, currentLocation, quest.isDemo]);
 
   const handleStartQuest = () => {
     if (!progress) {

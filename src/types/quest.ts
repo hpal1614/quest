@@ -59,6 +59,7 @@ export interface Quest {
     expirationDate: string;
   };
   estimatedDuration: number; // minutes
+  isDemo?: boolean; // Demo quests bypass GPS requirements
 }
 
 // User Progress Types

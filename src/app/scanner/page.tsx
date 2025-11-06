@@ -58,7 +58,10 @@ export default function ScannerPage() {
   }, [quest, router]);
 
   // Check if user is within range of current location
-  const isWithinRange = location && currentLocation 
+  // Demo quests bypass GPS requirements
+  const isWithinRange = quest?.isDemo
+    ? true
+    : location && currentLocation
     ? isWithinRadius(location, currentLocation.coordinates, currentLocation.radius)
     : false;
 
