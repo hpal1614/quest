@@ -73,6 +73,20 @@ export function ARScene({
     }
   }, [isPaused, status, hideUI]);
 
+  // Hide MindAR's scanning UI overlay when riddle overlay is open
+  useEffect(() => {
+    const scanningElement = containerRef.current?.querySelector('.scanning');
+    if (scanningElement) {
+      if (hideUI) {
+        console.log('🚫 Hiding MindAR scanning UI (overlay is open)');
+        (scanningElement as HTMLElement).style.display = 'none';
+      } else {
+        console.log('✅ Showing MindAR scanning UI (overlay is closed)');
+        (scanningElement as HTMLElement).style.display = '';
+      }
+    }
+  }, [hideUI]);
+
   const initializeAR = async () => {
     try {
       console.log('═══════════════════════════════════════════');
@@ -590,6 +604,17 @@ export function ARScene({
           height: 100% !important;
           object-fit: cover !important;
         }
+
+        /* Hide MindAR scanning UI when overlay is open */
+        ${hideUI ? `
+        .scanning,
+        .scanning .inner,
+        .scanning .scanline {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+        }
+        ` : ''}
       `}</style>
 
       {/* AR Container - Fullscreen with exact viewport dimensions */}
