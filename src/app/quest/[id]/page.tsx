@@ -48,7 +48,14 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
   } = useQuestProgress(quest);
 
   const [distanceToCurrentLocation, setDistanceToCurrentLocation] = useState<number | null>(null);
-  const [isWithinRange, setIsWithinRange] = useState(false);
+  const [isWithinRange, setIsWithinRange] = useState(quest.isDemo || false);
+
+  // Demo quests are always "within range"
+  useEffect(() => {
+    if (quest.isDemo) {
+      setIsWithinRange(true);
+    }
+  }, [quest.isDemo]);
 
   useEffect(() => {
     if (location && currentLocation) {
