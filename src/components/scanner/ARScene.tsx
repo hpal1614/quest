@@ -63,12 +63,15 @@ export function ARScene({
   useEffect(() => {
     isPausedRef.current = isPaused;
 
-    if (isPaused && mindarThreeRef.current) {
+    // Don't call stop() when overlay is open - prevents status changes that trigger loading spinner
+    if (isPaused && mindarThreeRef.current && !hideUI) {
+      console.log('⏸️ Pausing AR (but NOT for overlay - overlay handles its own state)');
       mindarThreeRef.current.stop();
     } else if (!isPaused && mindarThreeRef.current && status === 'ready') {
+      console.log('▶️ Resuming AR');
       mindarThreeRef.current.start();
     }
-  }, [isPaused, status]);
+  }, [isPaused, status, hideUI]);
 
   const initializeAR = async () => {
     try {
