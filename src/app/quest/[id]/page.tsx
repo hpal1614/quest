@@ -122,33 +122,45 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
         )}
 
         {/* GPS Status */}
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
-          {gpsLoading && (
-            <div className="flex items-center gap-2 text-gray-600">
-              <LoadingSpinner size="sm" />
-              <span className="text-sm">Getting your location...</span>
+        {quest.isDemo ? (
+          <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-300 rounded-lg">
+            <div className="flex items-center gap-2 text-purple-600">
+              <span className="text-xl">🎯</span>
+              <span className="text-sm font-medium">Demo Mode - No GPS Required!</span>
             </div>
-          )}
-          
-          {location && currentLocation && (
-            <div>
-              <div className={`flex items-center gap-2 mb-2 ${isWithinRange ? 'text-green-600' : 'text-orange-600'}`}>
-                <span className="text-xl">{isWithinRange ? '✅' : '⚠️'}</span>
-                <span className="text-sm font-medium">
-                  {isWithinRange 
-                    ? 'At Location - Ready to Scan!' 
-                    : `${formatDistance(distanceToCurrentLocation || 0)} away`
-                  }
-                </span>
+            <p className="text-xs text-purple-700 mt-1">
+              You can test all features without being at physical locations
+            </p>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+            {gpsLoading && (
+              <div className="flex items-center gap-2 text-gray-600">
+                <LoadingSpinner size="sm" />
+                <span className="text-sm">Getting your location...</span>
               </div>
-              {!isWithinRange && distanceToCurrentLocation && (
-                <p className="text-xs text-gray-600">
-                  Move within {currentLocation.radius}m to scan the mascot
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+
+            {location && currentLocation && (
+              <div>
+                <div className={`flex items-center gap-2 mb-2 ${isWithinRange ? 'text-green-600' : 'text-orange-600'}`}>
+                  <span className="text-xl">{isWithinRange ? '✅' : '⚠️'}</span>
+                  <span className="text-sm font-medium">
+                    {isWithinRange
+                      ? 'At Location - Ready to Scan!'
+                      : `${formatDistance(distanceToCurrentLocation || 0)} away`
+                    }
+                  </span>
+                </div>
+                {!isWithinRange && distanceToCurrentLocation && (
+                  <p className="text-xs text-gray-600">
+                    Move within {currentLocation.radius}m to scan the mascot
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Current Challenge */}
         {!progress && (
