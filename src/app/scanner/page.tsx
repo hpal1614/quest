@@ -12,6 +12,7 @@ import { ARButton } from '@/components/scanner/ARButton';
 import { ARScene } from '@/components/scanner/ARScene';
 import { SpeechBubble } from '@/components/scanner/SpeechBubble';
 import { OverlayModal } from '@/components/scanner/OverlayModal';
+import { CompletionModal } from '@/components/scanner/CompletionModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ScannerPage() {
@@ -21,7 +22,7 @@ export default function ScannerPage() {
   const quest = questId ? getQuestById(questId) : null;
   
   const { location } = useGeolocation();
-  const { progress, currentLocation, updateProgress } = useQuestProgress(quest!);
+  const { progress, currentLocation, updateProgress, completeQuest } = useQuestProgress(quest!);
 
   // Debug: Log current location info
   useEffect(() => {
@@ -40,6 +41,10 @@ export default function ScannerPage() {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [oliverPosition, setOliverPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Completion state
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
+  const [voucherCode, setVoucherCode] = useState('');
 
   useEffect(() => {
     console.log('🚀 [STEP 1] Scanner Page Initialized');
@@ -113,6 +118,13 @@ export default function ScannerPage() {
     setIsPaused(true);
   };
 
+  const generateVoucherCode = () => {
+    // Generate a unique voucher code
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `COFFEE-${timestamp}-${random}`;
+  };
+
   const handleAnswerSubmit = (answer: string) => {
     console.log('📝 [STEP 5] User submitted answer:', answer);
     // Check if answer is correct
@@ -130,16 +142,33 @@ export default function ScannerPage() {
       console.log('   → Next location:', nextLocation?.name || 'FINISH');
 
       if (nextLocation) {
+        // Not the last location - move to next
         updateProgress(quest.id, nextLocation.id);
         console.log('   → Progress updated to:', nextLocation.id);
-      }
 
-      // Show success message
-      setTimeout(() => {
-        alert('🎉 Correct! Location completed! Next clue unlocked.');
-        console.log('   → Redirecting back to quest page...');
-        router.back(); // Go back to quest detail page
-      }, 1000);
+        // Show success message
+        setTimeout(() => {
+          alert('🎉 Correct! Location completed! Next clue unlocked.');
+          console.log('   → Redirecting back to quest page...');
+          router.back(); // Go back to quest detail page
+        }, 1000);
+      } else {
+        // Last location - quest complete!
+        console.log('🎊 QUEST COMPLETE! Showing completion modal...');
+
+        // Generate voucher code
+        const code = generateVoucherCode();
+        setVoucherCode(code);
+
+        // Mark quest as complete in store
+        completeQuest(quest.id, code);
+
+        // Close riddle overlay and show completion modal
+        setIsOverlayOpen(false);
+        setTimeout(() => {
+          setIsCompletionModalOpen(true);
+        }, 500);
+      }
     } else {
       console.log('❌ [INCORRECT] Wrong answer provided');
     }
@@ -158,6 +187,12 @@ export default function ScannerPage() {
     if (confirm('Are you sure you want to leave? Your AR progress will be lost.')) {
       router.back();
     }
+  };
+
+  const handleCompletionClose = () => {
+    console.log('🏁 Quest completed, redirecting to home...');
+    setIsCompletionModalOpen(false);
+    router.push('/'); // Go back to quest list
   };
 
   if (!quest) {
@@ -230,6 +265,15 @@ export default function ScannerPage() {
           questTheme={quest.theme}
         />
       )}
+
+      {/* Completion Modal */}
+      <CompletionModal
+        isOpen={isCompletionModalOpen}
+        onClose={handleCompletionClose}
+        questTitle={quest.title}
+        voucherCode={voucherCode}
+        questTheme={quest.theme}
+      />
     </div>
   );
 }
