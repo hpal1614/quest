@@ -74,11 +74,11 @@ export function CompletionModal({
 
       // Add reward section
       doc.setFontSize(18);
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.text('You\'ve Won a Free Coffee!', 105, 65, { align: 'center' });
 
       doc.setFontSize(12);
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.text('Show this voucher at any participating shop', 105, 73, { align: 'center' });
 
       // Add QR code
@@ -105,13 +105,13 @@ export function CompletionModal({
       doc.text('VOUCHER CODE', 105, 175, { align: 'center' });
 
       doc.setFontSize(18);
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.text(voucherCode, 105, 185, { align: 'center' });
 
       // Add redemption instructions
       doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
       doc.text('How to redeem:', 20, 200);
       doc.text('• Visit any participating coffee shop', 25, 207);
