@@ -63,15 +63,16 @@ export function ARScene({
   useEffect(() => {
     isPausedRef.current = isPaused;
 
-    // Don't call stop() when overlay is open - prevents status changes that trigger loading spinner
-    if (isPaused && mindarThreeRef.current && !hideUI) {
-      console.log('⏸️ Pausing AR (but NOT for overlay - overlay handles its own state)');
+    // Always stop/start MindAR based on isPaused state
+    // The hideUI prop controls UI visibility, not MindAR execution
+    if (isPaused && mindarThreeRef.current) {
+      console.log('⏸️ Pausing MindAR (overlay open - AR stopped)');
       mindarThreeRef.current.stop();
     } else if (!isPaused && mindarThreeRef.current && status === 'ready') {
-      console.log('▶️ Resuming AR');
+      console.log('▶️ Resuming MindAR (overlay closed - AR resumed)');
       mindarThreeRef.current.start();
     }
-  }, [isPaused, status, hideUI]);
+  }, [isPaused, status]);
 
   // Hide MindAR's scanning UI overlay when riddle overlay is open
   useEffect(() => {
