@@ -31,23 +31,34 @@ export default function QuestListPage() {
   }, [onboardingCompleted]);
 
   useEffect(() => {
-    // Filter and sort quests when location is available
-    if (location) {
-      // Step 1: Filter by date status - only show active quests
-      const activeQuests = QUESTS.filter(quest =>
-        isQuestActive(quest.startDate, quest.endDate)
-      );
+    // Step 1: Filter by date status - only show active quests
+    const activeQuests = QUESTS.filter(quest =>
+      isQuestActive(quest.startDate, quest.endDate)
+    );
 
-      // Step 2: Calculate distance for active quests only
-      const questsWithDistance = activeQuests.map(quest => ({
+    // Step 2: Separate demo quests from regular quests
+    const demoQuests = activeQuests.filter(quest => quest.isDemo);
+    const regularQuests = activeQuests.filter(quest => !quest.isDemo);
+
+    // Step 3: Demo quests are always available (no GPS required)
+    const demoQuestsWithDistance = demoQuests.map(quest => ({
+      ...quest,
+      distance: 0 // Demo quests have no distance requirement
+    }));
+
+    // Step 4: Regular quests require GPS location
+    let regularQuestsWithDistance: Array<Quest & { distance: number }> = [];
+    if (location) {
+      regularQuestsWithDistance = regularQuests.map(quest => ({
         ...quest,
         distance: calculateDistance(location, quest.locations[0].coordinates)
       }));
-
-      // Step 3: Sort by distance (nearest first)
-      questsWithDistance.sort((a, b) => a.distance - b.distance);
-      setSortedQuests(questsWithDistance);
+      regularQuestsWithDistance.sort((a, b) => a.distance - b.distance);
     }
+
+    // Step 5: Combine demo quests (first) and regular quests (sorted by distance)
+    const allQuests = [...demoQuestsWithDistance, ...regularQuestsWithDistance];
+    setSortedQuests(allQuests);
   }, [location]);
 
   const handleOnboardingComplete = () => {
