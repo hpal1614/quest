@@ -76,13 +76,24 @@ export function ARScene({
 
   // Hide MindAR's scanning UI overlay when riddle overlay is open
   useEffect(() => {
+    // Target the parent overlay element that MindAR creates
+    const mindarOverlay = containerRef.current?.querySelector('.mindar-ui-overlay');
     const scanningElement = containerRef.current?.querySelector('.scanning');
-    if (scanningElement) {
-      if (hideUI) {
-        console.log('🚫 Hiding MindAR scanning UI (overlay is open)');
+
+    if (hideUI) {
+      console.log('🚫 Hiding MindAR scanning UI (overlay is open)');
+      if (mindarOverlay) {
+        (mindarOverlay as HTMLElement).style.display = 'none';
+      }
+      if (scanningElement) {
         (scanningElement as HTMLElement).style.display = 'none';
-      } else {
-        console.log('✅ Showing MindAR scanning UI (overlay is closed)');
+      }
+    } else {
+      console.log('✅ Showing MindAR scanning UI (overlay is closed)');
+      if (mindarOverlay) {
+        (mindarOverlay as HTMLElement).style.display = '';
+      }
+      if (scanningElement) {
         (scanningElement as HTMLElement).style.display = '';
       }
     }
@@ -608,12 +619,15 @@ export function ARScene({
 
         /* Hide MindAR scanning UI when overlay is open */
         ${hideUI ? `
+        .mindar-ui-overlay,
+        .mindar-ui-scanning,
         .scanning,
         .scanning .inner,
         .scanning .scanline {
           display: none !important;
           opacity: 0 !important;
           visibility: hidden !important;
+          pointer-events: none !important;
         }
         ` : ''}
       `}</style>
