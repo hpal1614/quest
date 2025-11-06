@@ -100,15 +100,19 @@ export function ARScene({
   }, [hideUI]);
 
   const initializeAR = async () => {
+    // Detect Android device once at the start
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
     try {
       console.log('═══════════════════════════════════════════');
       console.log('🎬 [AR INIT START] Beginning AR initialization...');
       console.log('═══════════════════════════════════════════');
+      console.log('📱 Device detected:', isAndroid ? 'Android' : 'iOS/Other');
 
       // Step 1: Request camera permission
       setStatus('requesting-camera');
       console.log('📹 [AR STEP 1/6] Requesting camera permission...');
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
@@ -119,6 +123,13 @@ export function ARScene({
       console.log('✅ [AR STEP 1/6] Camera permission granted');
       console.log('   → Camera facing: environment (back camera)');
       console.log('   → Resolution: 1280x720 (ideal)');
+
+      // Android-specific fix: Wait for camera stream to be fully ready
+      if (isAndroid) {
+        console.log('⏳ Android detected - waiting for camera to stabilize...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('✅ Camera stabilization complete');
+      }
 
       // Stop the test stream - MindAR will create its own
       stream.getTracks().forEach(track => track.stop());
@@ -471,14 +482,44 @@ export function ARScene({
         renderer.render(scene, camera);
       });
 
-      // Start AR
+      // Start AR with retry logic for Android
       console.log('🚀 [AR STEP 5/6] Starting MindAR engine...');
       console.log('   → Scene children:', scene.children.length);
       console.log('   → Anchor children:', anchor.group.children.length);
       console.log('   → Renderer size:', renderer.domElement.width, 'x', renderer.domElement.height);
 
-      await mindarThree.start();
-      console.log('✅ [AR STEP 5/6] MindAR started successfully!');
+      // Android-specific fix: Retry logic with delays
+      let startSuccess = false;
+      let lastError = null;
+      const maxRetries = isAndroid ? 3 : 1; // More retries on Android
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          if (attempt > 1) {
+            console.log(`🔄 Retry attempt ${attempt}/${maxRetries} to start MindAR...`);
+            // Wait before retry, increasing delay each time
+            await new Promise(resolve => setTimeout(resolve, attempt * 300));
+          }
+
+          await mindarThree.start();
+          startSuccess = true;
+          console.log('✅ [AR STEP 5/6] MindAR started successfully!');
+          break; // Success, exit retry loop
+        } catch (err) {
+          lastError = err;
+          console.warn(`⚠️ MindAR start attempt ${attempt} failed:`, err);
+
+          if (attempt < maxRetries) {
+            console.log('⏳ Retrying in a moment...');
+          }
+        }
+      }
+
+      if (!startSuccess) {
+        console.error('❌ Failed to start MindAR after', maxRetries, 'attempts');
+        throw lastError || new Error('MindAR start failed');
+      }
+
       console.log('   → Camera feed is now active');
       console.log('   → Renderer is running');
       console.log('');
