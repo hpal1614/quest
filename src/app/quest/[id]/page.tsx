@@ -94,6 +94,19 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
     }
   };
 
+  const handleResetQuest = () => {
+    if (confirm('Reset this quest? This will clear all progress and you can start fresh.')) {
+      // Clear this quest from active quests
+      const store = useQuestStore.getState();
+      store.activeQuests = store.activeQuests.filter(q => q.questId !== quest.id);
+      localStorage.setItem('quest-storage', JSON.stringify({
+        state: store,
+        version: 0
+      }));
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50">
       {/* Header */}
@@ -189,6 +202,27 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
           </motion.div>
         )}
 
+        {progress && !currentLocation && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 rounded-lg border-2 border-red-200 p-6 mb-6"
+          >
+            <h2 className="text-lg font-bold text-red-900 mb-2">
+              ⚠️ Quest Data Error
+            </h2>
+            <p className="text-sm text-red-700 mb-4">
+              Your quest progress is corrupted. Please reset the quest to start fresh.
+            </p>
+            <button
+              onClick={handleResetQuest}
+              className="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Reset Quest
+            </button>
+          </motion.div>
+        )}
+
         {progress && currentLocation && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -234,6 +268,18 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
             <p className="text-sm text-gray-600">
               🔒 Complete current challenge to reveal
             </p>
+          </div>
+        )}
+
+        {/* Debug/Reset Section */}
+        {progress && (
+          <div className="mt-6 pt-4 border-t border-gray-200 text-center">
+            <button
+              onClick={handleResetQuest}
+              className="text-xs text-red-500 hover:text-red-700 underline"
+            >
+              Reset Quest (Debug)
+            </button>
           </div>
         )}
       </main>
