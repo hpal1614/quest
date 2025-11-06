@@ -72,7 +72,11 @@ export default function QuestDetailPage({ params }: QuestDetailPageProps) {
 
   const handleStartQuest = () => {
     if (!progress) {
-      startQuest(quest.id);
+      // Pass the first location's ID to startQuest
+      const firstLocationId = quest.locations[0]?.id;
+      if (firstLocationId) {
+        startQuest(quest.id, firstLocationId);
+      }
     }
   };
 

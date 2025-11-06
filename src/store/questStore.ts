@@ -10,7 +10,7 @@ interface QuestState {
   currentLocation: Coordinates | null;
   
   // Actions
-  startQuest: (questId: string) => void;
+  startQuest: (questId: string, startLocationId: string) => void;
   updateProgress: (questId: string, locationId: string) => void;
   addHint: (questId: string, locationId: string) => void;
   completeQuest: (questId: string, voucherCode: string, voucherPdfUrl?: string) => void;
@@ -26,10 +26,10 @@ export const useQuestStore = create<QuestState>()(
       completedQuests: [],
       currentLocation: null,
       
-      startQuest: (questId: string) => {
+      startQuest: (questId: string, startLocationId: string) => {
         const existing = get().activeQuests.find(q => q.questId === questId);
         if (existing) return; // Already started
-        
+
         set((state) => ({
           activeQuests: [
             ...state.activeQuests,
@@ -37,7 +37,7 @@ export const useQuestStore = create<QuestState>()(
               questId,
               status: 'in_progress',
               startedAt: new Date().toISOString(),
-              currentLocationId: 'start',
+              currentLocationId: startLocationId,
               completedLocationIds: [],
               hintsUsed: {},
               questStarted: true
