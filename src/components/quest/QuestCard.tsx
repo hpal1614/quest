@@ -30,7 +30,8 @@ export function QuestCard({ quest, distance, userLocation }: QuestCardProps) {
   const category = getDistanceCategory(distance);
 
   // Quest is available only if: within range AND dates are active AND not expired
-  const isAvailable = category === 'available' && isDateActive && !isExpired;
+  // Demo quests bypass GPS requirements
+  const isAvailable = quest.isDemo ? isDateActive && !isExpired : (category === 'available' && isDateActive && !isExpired);
 
   const handleClick = () => {
     // Check date restrictions first
@@ -137,7 +138,7 @@ export function QuestCard({ quest, distance, userLocation }: QuestCardProps) {
         {/* Status Info */}
         <div className="flex items-center justify-between mb-3">
           <div className={`text-sm ${isAvailable ? 'text-white/90' : 'text-gray-600'}`}>
-            📍 {formatDistance(distance)} away
+            {quest.isDemo ? '📍 Demo (No GPS required)' : `📍 ${formatDistance(distance)} away`}
           </div>
           {getStatusBadge()}
         </div>
